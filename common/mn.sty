@@ -1,0 +1,133 @@
+% Wspólny styl dla rozwiązań zestawów z Metod numerycznych.
+% Wersja na telefon: kompilować z \def\TELEFON{} przed \documentclass
+% (robi to build.sh), wtedy strona jest wąska i nie trzeba jej przybliżać.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{mn}[2026/10/22 Metody numeryczne - rozwiazania]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[polish]{babel}
+\RequirePackage{lmodern}
+\RequirePackage{microtype}
+
+\ifdefined\TELEFON
+  \RequirePackage[paperwidth=11cm,paperheight=19.5cm,
+    margin=4mm,top=6mm,bottom=8mm,footskip=4mm]{geometry}
+\else
+  \RequirePackage[a4paper,margin=2.3cm]{geometry}
+\fi
+
+\RequirePackage{amsmath,amssymb,amsthm,mathtools}
+\RequirePackage{enumitem}
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{tikz}
+\usetikzlibrary{trees,positioning,decorations.pathreplacing,calc}
+\RequirePackage{algorithm}
+\RequirePackage[noend]{algpseudocode}
+\RequirePackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=NavyBlue,urlcolor=NavyBlue,
+  pdfborder={0 0 0}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\setlist{nosep,leftmargin=*}
+\allowdisplaybreaks
+
+% ---------- Notacja ----------
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\lgs}{\lg^{*}}
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\ff}[2]{#1^{\underline{#2}}} % potęga krocząca w dół
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\fl}{\operatorname{fl}}         % zaokrąglenie do liczby maszynowej
+\newcommand{\eps}{\mathbf{u}}               % precyzja arytmetyki (unit roundoff)
+\newcommand{\oplusm}{\mathbin{\oplus}}      % działania maszynowe
+\newcommand{\otimesm}{\mathbin{\otimes}}
+\providecommand{\lg}{\operatorname{lg}}
+\algrenewcommand\algorithmicfunction{\textbf{funkcja}}
+\algrenewcommand\algorithmicif{\textbf{jeśli}}
+\algrenewcommand\algorithmicthen{\textbf{to}}
+\algrenewcommand\algorithmicelse{\textbf{w~przeciwnym razie}}
+\algrenewcommand\algorithmicfor{\textbf{dla}}
+\algrenewcommand\algorithmicdo{\textbf{wykonaj}}
+\algrenewcommand\algorithmicreturn{\textbf{zwróć}}
+\floatname{algorithm}{Algorytm}
+
+% ---------- Twierdzenia i definicje ----------
+\theoremstyle{definition}
+\newtheorem{definicja}{Definicja}
+\newtheorem{twierdzenie}[definicja]{Twierdzenie}
+\newtheorem{lemat}[definicja]{Lemat}
+\newtheorem{fakt}[definicja]{Fakt}
+\theoremstyle{remark}
+\newtheorem*{uwaga}{Uwaga}
+\renewcommand{\qedsymbol}{$\blacksquare$}
+
+% ---------- Pudełka ----------
+% Każde zadanie to \section{Zadanie N. krótki opis} (bez automatycznej
+% numeracji, numer jak w zestawie), a pod nim pudełko z przepisaną treścią.
+\setcounter{secnumdepth}{0}
+\newtcolorbox{tresc}{enhanced,breakable,colback=gray!6,colframe=gray!60,
+  fonttitle=\bfseries,title={Treść}}
+
+% Wyjaśnienie intuicyjne
+\newtcolorbox{intuicja}{enhanced,breakable,colback=YellowOrange!8,
+  colframe=YellowOrange!80!black,fonttitle=\bfseries,
+  title={Intuicja}}
+
+% Teoria potrzebna do zadania (definicje, twierdzenia)
+\newtcolorbox{teoria}[1][Teoria]{enhanced,breakable,colback=NavyBlue!5,
+  colframe=NavyBlue!70!black,fonttitle=\bfseries,title={#1}}
+
+% Końcowa odpowiedź
+\newtcolorbox{odpowiedz}{enhanced,colback=ForestGreen!8,
+  colframe=ForestGreen!70!black,fonttitle=\bfseries,title={Odpowiedź}}
+
+\newcommand{\formalnie}{\par\medskip\noindent\textbf{\textcolor{NavyBlue!70!black}{Rozwiązanie formalne.}}\par}
+
+% Nagłówek dokumentu. W pliku zbiorczym (\def\WSZYSTKO{}) zamiast strony
+% tytułowej zestawu wstawiany jest nagłówek części + wpis w spisie treści.
+\newcommand{\zestaw}[2]{%
+  \ifdefined\WSZYSTKO
+    \clearpage\phantomsection
+    \addcontentsline{toc}{part}{Zestaw #1 --- #2}%
+    \begin{center}
+      {\LARGE\bfseries Zestaw #1}\\[0.2em]
+      {\small #2}
+    \end{center}
+  \else
+    \begin{center}
+      {\LARGE\bfseries Metody numeryczne}\\[0.3em]
+      {\Large Zestaw #1 --- rozwiązania}\\[0.2em]
+      {\small #2}
+    \end{center}
+    \ifdefined\TELEFON\else\tableofcontents\fi
+  \fi
+}
+
+% Plik zbiorczy: \wlaczzestaw{prefiks}{plik.tex} wstawia cały dokument zestawu
+% (docmute pomija jego preambułę), etykiety dostają prefiks zestawu,
+% więc \label{lem:x} w różnych zestawach się nie gryzie.
+\ifdefined\WSZYSTKO
+  \RequirePackage{docmute}
+  \def\mnprefix{}
+  \AtBeginDocument{%
+    \let\mnoldlabel\label
+    \renewcommand{\label}[1]{\mnoldlabel{\mnprefix#1}}%
+    \let\mnoldref\ref
+    \renewcommand{\ref}[1]{\mnoldref{\mnprefix#1}}%
+  }
+  \newcommand{\wlaczzestaw}[2]{%
+    \begingroup
+    \def\mnprefix{#1:}%
+    \setcounter{definicja}{0}%
+    \input{#2}%
+    \endgroup
+  }
+\fi

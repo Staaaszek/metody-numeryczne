@@ -1,0 +1,435 @@
+\documentclass[11pt]{article}
+\usepackage{mn}
+
+\begin{document}
+\zestaw{2}{Eliminacja Gaussa i~rozkład LU}
+
+\begin{teoria}[Jak czytać ten dokument]
+Każde zadanie ma: przepisaną \textbf{treść} (szare pudełko), potrzebną
+\textbf{teorię} (niebieskie), \textbf{intuicję} (żółte), \textbf{rozwiązanie
+formalne} i~\textbf{odpowiedź} (zielone). Wyniki zostały sprawdzone
+numerycznie (na ułamkach, bez błędów zaokrągleń) skryptem
+\texttt{weryfikacja/mn02.py}. Macierze są $n\times n$, $A_k$ oznacza
+lewy górny blok $k\times k$ macierzy $A$ (\emph{wiodącą podmacierz}).
+\end{teoria}
+
+% =====================================================================
+\section{Teoria: eliminacja Gaussa i~rozkład LU}
+
+\begin{definicja}[Macierze trójkątne]
+$U$ jest \emph{górnotrójkątna}, gdy $u_{ij}=0$ dla $i>j$ (zera pod
+przekątną); $L$ jest \emph{dolnotrójkątna}, gdy $l_{ij}=0$ dla $i<j$.
+Dolnotrójkątna z~jedynkami na przekątnej to \emph{jednostkowa dolnotrójkątna}.
+Wyznacznik macierzy trójkątnej to iloczyn wyrazów na przekątnej.
+\end{definicja}
+
+\begin{definicja}[Eliminacja Gaussa bez wyboru elementu głównego]
+Dla $k=1,\ldots,n-1$: jeśli \emph{element główny} (\emph{pivot})
+$a^{(k)}_{kk}\ne0$, to dla każdego $i>k$ liczymy mnożnik
+$l_{ik}=a^{(k)}_{ik}/a^{(k)}_{kk}$ i~od wiersza $i$ odejmujemy wiersz $k$
+pomnożony przez $l_{ik}$. To zeruje kolumnę $k$ pod przekątną. Na końcu
+dostajemy macierz górnotrójkątną $U$. Jeśli $a^{(k)}_{kk}=0$, algorytm
+bez permutacji wierszy staje.
+\end{definicja}
+
+\begin{definicja}[Częściowy wybór elementu głównego, \emph{partial pivoting}]
+W~kroku $k$ wybieramy $p\ge k$ z~największym $\abs{a^{(k)}_{pk}}$
+i~zamieniamy wiersze $k$ i~$p$ (dopiero potem eliminujemy). Dzięki temu
+$\abs{l_{ik}}\le1$, co ogranicza wzrost błędów.
+\end{definicja}
+
+\begin{twierdzenie}[Eliminacja Gaussa $=$ rozkład LU]\label{tw:lu}
+Jeśli eliminacja bez permutacji dochodzi do końca, to $A=LU$, gdzie
+$L$ jest jednostkowa dolnotrójkątna z~mnożnikami $l_{ik}$ pod przekątną,
+a~$U$ --- otrzymana macierz górnotrójkątna (tzw.\ \emph{rozkład Doolittle'a}).
+Przy pivotingu: $PA=LU$, gdzie $P$ to macierz permutacji.
+\end{twierdzenie}
+
+\begin{proof}[Szkic]
+Krok $k$ to mnożenie z~lewej przez $M_k=I-\ell_ke_k^{T}$, gdzie
+$\ell_k=(0,\ldots,0,l_{k+1,k},\ldots,l_{nk})^T$. Mamy
+$M_{n-1}\cdots M_1A=U$, a~$M_k^{-1}=I+\ell_ke_k^T$ (bo $e_k^T\ell_k=0$).
+Iloczyn $M_1^{-1}\cdots M_{n-1}^{-1}=I+\sum_k\ell_ke_k^T=L$, więc $A=LU$.
+\end{proof}
+
+\begin{lemat}[Wiodące minory]\label{lem:minory}
+Jeśli eliminacja bez permutacji przeszła kroki $1,\ldots,k-1$ (pivoty
+$u_{11},\ldots,u_{k-1,k-1}$ niezerowe), to
+\[
+\det A_k=u_{11}\,u_{22}\cdots u_{kk},
+\]
+gdzie $u_{kk}=a^{(k)}_{kk}$ to aktualny wyraz na pozycji $(k,k)$.
+W~szczególności eliminacja bez permutacji przechodzi do końca wtedy
+i~tylko wtedy, gdy $\det A_k\ne0$ dla $k=1,\ldots,n-1$.
+\end{lemat}
+
+\begin{proof}
+Każda operacja w~eliminacji to „do wiersza $i$ dodaj wielokrotność
+wcześniejszego wiersza $j<i$”. Gdy $i\le k$, to też $j\le k$, więc
+ograniczona do pierwszych $k$ kolumn jest to taka sama operacja na
+wierszach bloku $A_k$ --- nie zmienia $\det A_k$. Wierszy $i>k$ blok $A_k$
+nie zawiera. Po $k-1$ krokach blok $k\times k$ jest górnotrójkątny
+z~przekątną $u_{11},\ldots,u_{kk}$, więc $\det A_k=u_{11}\cdots u_{kk}$.
+Stąd $u_{kk}=\det A_k/\det A_{k-1}$ i~$u_{kk}\ne0\iff\det A_k\ne0$
+(indukcja po $k$).
+\end{proof}
+
+\begin{intuicja}
+Eliminacja Gaussa to dokładnie to, co robimy na kartce, rozwiązując
+układ równań: z~pierwszego równania „wyrzucamy” $x_1$ z~pozostałych,
+potem $x_2$ itd. Rozkład $LU$ to tylko \emph{zapisanie}, co zrobiliśmy:
+$U$ --- co zostało, $L$ --- przez co mnożyliśmy. Mając $A=LU$, układ
+$Ax=b$ rozwiązujemy w~$O(n^2)$: $Ly=b$ (podstawianie w~przód), $Ux=y$
+(podstawianie wstecz). Sam rozkład kosztuje $\approx\tfrac23n^3$ działań.
+\end{intuicja}
+
+% =====================================================================
+\section{Zadanie 1. Wielomian z~wartości w~\texorpdfstring{$O(n^3)$}{O(n³)}}
+\begin{tresc}
+Wielomian $W(x)$ jest stopnia nie większego niż $n$. Podać algorytm
+działający w~$O(n^3)$, który mając dane jego wartości w~$n+1$ punktach
+$x_0,x_1,\ldots,x_n$, obliczy współczynniki tego wielomianu. Nie trzeba
+(chwilowo i~wyjątkowo!) martwić się o~stabilność numeryczną.
+\end{tresc}
+
+\begin{teoria}[Interpolacja wielomianowa]
+\begin{fakt}\label{fakt:pierwiastki}
+Niezerowy wielomian stopnia $\le n$ ma co najwyżej $n$ pierwiastków.
+\end{fakt}
+\begin{definicja}[Macierz Vandermonde'a]
+Dla punktów $x_0,\ldots,x_n$:
+\[
+V=\begin{bmatrix}
+1&x_0&x_0^2&\cdots&x_0^n\\
+1&x_1&x_1^2&\cdots&x_1^n\\
+\vdots&&&&\vdots\\
+1&x_n&x_n^2&\cdots&x_n^n
+\end{bmatrix},\qquad V_{ij}=x_i^{\,j}.
+\]
+\end{definicja}
+\end{teoria}
+
+\begin{intuicja}
+Niewiadomymi są współczynniki $a_0,\ldots,a_n$ wielomianu
+$W(x)=a_0+a_1x+\dots+a_nx^n$. Każda znana wartość $W(x_i)=y_i$ to
+jedno równanie \emph{liniowe} w~$a_j$:
+$a_0+a_1x_i+\dots+a_nx_i^n=y_i$. Mamy $n+1$ równań z~$n+1$ niewiadomymi
+--- układ $Va=y$. Rozwiązujemy go eliminacją Gaussa, która kosztuje
+$O(n^3)$. Trzeba tylko upewnić się, że układ ma dokładnie jedno rozwiązanie.
+\end{intuicja}
+
+\formalnie
+Zakładamy, że punkty $x_i$ są \textbf{parami różne} (inaczej zadanie nie
+ma sensu: dwa razy ten sam punkt to jedna informacja, a~nie dwie).
+
+\emph{Algorytm.}
+\begin{enumerate}
+\item Zbuduj $V$: w~każdym wierszu $V_{i0}=1$, $V_{ij}=V_{i,j-1}\cdot x_i$
+--- razem $O(n^2)$ mnożeń.
+\item Rozwiąż $Va=y$ eliminacją Gaussa (z~podstawianiem wstecz),
+gdzie $y=(W(x_0),\ldots,W(x_n))^T$.
+\item Zwróć $a=(a_0,\ldots,a_n)$: $W(x)=\sum_j a_jx^j$.
+\end{enumerate}
+
+\emph{Poprawność.} $(Va)_i=\sum_ja_jx_i^j=W(x_i)$, więc prawdziwe
+współczynniki $W$ spełniają $Va=y$. Pokażemy, że $V$ jest odwracalna,
+więc to jedyne rozwiązanie. Jeśli $Vc=0$, to wielomian
+$P(x)=\sum_jc_jx^j$ stopnia $\le n$ zeruje się w~$n+1$ różnych punktach
+$x_0,\ldots,x_n$; z~faktu~\ref{fakt:pierwiastki} $P\equiv0$, czyli $c=0$.
+Jądro $V$ jest trywialne, więc $V$ jest odwracalna.
+
+Co więcej, Gauss \textbf{nie potrzebuje nawet permutacji wierszy}: wiodący
+blok $V_k$ to macierz Vandermonde'a punktów $x_0,\ldots,x_{k-1}$ (stopień
+$\le k-1$, $k$ różnych punktów), więc tym samym argumentem jest odwracalny,
+$\det V_k\ne0$, i~z~lematu~\ref{lem:minory} wszystkie pivoty są niezerowe.
+
+\emph{Złożoność.} Niech $m=n+1$. W~kroku $k$ eliminacji dla każdego
+z~$m-k$ wierszy poniżej liczymy mnożnik i~aktualizujemy $m-k$ wyrazów
+macierzy oraz $1$ wyraz prawej strony, czyli $\le2(m-k+1)$ działań:
+\[
+\sum_{k=1}^{m-1}(m-k)\cdot2(m-k+1)\le2\sum_{j=1}^{m}j^2=O(m^3).
+\]
+Podstawianie wstecz to $O(m^2)$, budowa $V$ --- $O(m^2)$. Razem $O(n^3)$.
+
+\begin{uwaga}
+To rozwiązanie jest dobre „na teraz”: macierz Vandermonde'a jest bardzo
+źle uwarunkowana, więc w~praktyce numerycznej tego się nie robi.
+Szybciej (w~$O(n^2)$) i~stabilniej jest użyć postaci Newtona
+(ilorazy różnicowe) lub Lagrange'a --- będzie o~tym przy interpolacji.
+\end{uwaga}
+
+\begin{odpowiedz}
+Współczynniki $a=(a_0,\ldots,a_n)$ to rozwiązanie układu $Va=y$ z~macierzą
+Vandermonde'a $V_{ij}=x_i^{\,j}$ i~$y_i=W(x_i)$. Budowa $V$ --- $O(n^2)$,
+eliminacja Gaussa --- $O(n^3)$. Dla parami różnych $x_i$ macierz jest
+odwracalna (i~wystarcza Gauss bez permutacji).
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 2. Macierz \texorpdfstring{$\left[\begin{smallmatrix}0&1\\1&1\end{smallmatrix}\right]$}{[[0,1],[1,1]]} nie ma rozkładu LU}
+\begin{tresc}
+Pokazać, że macierz
+$\begin{bmatrix}0&1\\1&1\end{bmatrix}$
+w~ogóle nie posiada rozkładu $LU$, o~ile nie dopuszczamy pivotingu.
+\end{tresc}
+
+\begin{intuicja}
+Gauss staje od razu: pivot $a_{11}=0$, a~zerem nie da się wyeliminować
+jedynki pod nim. Ale „Gauss staje” to za mało --- trzeba pokazać, że
+\emph{żadne} $L$ i~$U$ (nawet bez jedynek na przekątnej $L$) nie dają $A$.
+Kluczowe: w~iloczynie trójkątnych wyraz $(1,1)$ to po prostu $l_{11}u_{11}$,
+a~on zeruje albo cały pierwszy wiersz, albo całą pierwszą kolumnę.
+\end{intuicja}
+
+\formalnie
+Przypuśćmy, że
+\[
+\begin{bmatrix}0&1\\1&1\end{bmatrix}
+=\begin{bmatrix}l_{11}&0\\l_{21}&l_{22}\end{bmatrix}
+\begin{bmatrix}u_{11}&u_{12}\\0&u_{22}\end{bmatrix}
+=\begin{bmatrix}l_{11}u_{11}&l_{11}u_{12}\\l_{21}u_{11}&l_{21}u_{12}+l_{22}u_{22}\end{bmatrix}.
+\]
+Z~pozycji $(1,1)$: $l_{11}u_{11}=0$, więc $l_{11}=0$ lub $u_{11}=0$.
+\begin{itemize}
+\item $l_{11}=0$: wtedy wyraz $(1,2)$ to $l_{11}u_{12}=0\ne1$. Sprzeczność.
+\item $u_{11}=0$: wtedy wyraz $(2,1)$ to $l_{21}u_{11}=0\ne1$. Sprzeczność.
+\end{itemize}
+Zatem rozkład $A=LU$ nie istnieje (dla żadnych trójkątnych $L,U$).
+
+\begin{uwaga}
+To szczególny przypadek lematu~\ref{lem:minory}: $\det A_1=0$, choć
+$\det A=-1\ne0$. Z~pivotingiem wszystko działa: zamiana wierszy daje
+$PA=\left[\begin{smallmatrix}1&1\\0&1\end{smallmatrix}\right]=I\cdot U$.
+\end{uwaga}
+
+\begin{odpowiedz}
+Z~$l_{11}u_{11}=a_{11}=0$ wynika, że zeruje się cały pierwszy wiersz $LU$
+($l_{11}=0$) albo cała pierwsza kolumna ($u_{11}=0$) --- a~w~$A$ oba zawierają
+jedynkę. Rozkładu $LU$ bez permutacji nie ma.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 3. Odwrotność macierzy górnotrójkątnej}
+\begin{tresc}
+Pokazać, że odwrotność macierzy górnotrójkątnej (jeśli istnieje) jest
+macierzą górnotrójkątną.
+\end{tresc}
+
+\begin{teoria}[Iloczyn macierzy trójkątnych]
+\begin{lemat}\label{lem:iloczyn}
+Iloczyn macierzy górnotrójkątnych jest górnotrójkątny, a~jego przekątna
+to iloczyny przekątnych: $(AB)_{ii}=a_{ii}b_{ii}$. To samo dla
+dolnotrójkątnych (w~szczególności iloczyn jednostkowych dolnotrójkątnych
+jest jednostkowy dolnotrójkątny).
+\end{lemat}
+\begin{proof}
+$(AB)_{ij}=\sum_ka_{ik}b_{kj}$, przy czym $a_{ik}=0$ dla $k<i$
+i~$b_{kj}=0$ dla $k>j$. Niezerowe mogą być tylko składniki z~$i\le k\le j$.
+Dla $i>j$ takich $k$ nie ma, więc $(AB)_{ij}=0$; dla $i=j$ jest jeden:
+$k=i$. Dolnotrójkątne --- przez transpozycję.
+\end{proof}
+\end{teoria}
+
+\begin{intuicja}
+Kolumna $j$ macierzy $U^{-1}$ to rozwiązanie $Ux=e_j$. Układ z~macierzą
+górnotrójkątną rozwiązujemy od dołu (podstawianie wstecz). Prawa strona
+$e_j$ ma zera na pozycjach $j+1,\ldots,n$, więc od dołu wychodzą same
+zera aż do pozycji $j$ --- czyli $U^{-1}$ ma zera pod przekątną.
+\end{intuicja}
+
+\formalnie
+Niech $U$ będzie górnotrójkątna i~odwracalna. Wtedy
+$0\ne\det U=u_{11}\cdots u_{nn}$, więc $u_{ii}\ne0$ dla każdego $i$.
+
+Ustalmy $j$ i~niech $x$ będzie $j$-tą kolumną $U^{-1}$, czyli $Ux=e_j$.
+Wiersz $i$ tego układu to
+\[
+u_{ii}x_i+\sum_{k>i}u_{ik}x_k=(e_j)_i.
+\]
+Pokażemy indukcją \emph{w~dół}, od $i=n$ do $i=j+1$, że $x_i=0$.
+Dla $i>j$ jest $(e_j)_i=0$ i~z~założenia indukcyjnego $x_k=0$ dla
+wszystkich $k>i$, więc wiersz $i$ daje $u_{ii}x_i=0$, a~ponieważ
+$u_{ii}\ne0$, to $x_i=0$. (Dla $i=n$ suma jest pusta.)
+
+Zatem $(U^{-1})_{ij}=x_i=0$ dla $i>j$ --- $U^{-1}$ jest górnotrójkątna.
+Dodatkowo wiersz $i=j$ daje $u_{jj}x_j=1$, czyli $(U^{-1})_{jj}=1/u_{jj}$.
+
+\begin{uwaga}
+Transponując: odwrotność dolnotrójkątnej jest dolnotrójkątna (bo
+$(L^{-1})^T=(L^T)^{-1}$), a~odwrotność jednostkowej dolnotrójkątnej
+ma na przekątnej $1/1=1$, czyli też jest jednostkowa.
+\end{uwaga}
+
+\begin{odpowiedz}
+Kolumna $j$ macierzy $U^{-1}$ rozwiązuje $Ux=e_j$; podstawianie wstecz
+daje kolejno $x_n=\dots=x_{j+1}=0$ (bo $u_{ii}\ne0$). Zatem $U^{-1}$ jest
+górnotrójkątna, a~jej przekątna to $1/u_{ii}$.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 4. Jednoznaczność rozkładu Doolittle'a}
+\begin{tresc}
+Pokazać, że dla odwracalnej macierzy $A$ rozkład $A=LU$ taki, że $L$ ma
+na przekątnej jedynki (rozkład Doolittle'a) jest jednoznaczny.
+\end{tresc}
+
+\begin{intuicja}
+Jeśli $L_1U_1=L_2U_2$, to „przerzucamy” $L$-ki na jedną stronę,
+a~$U$-ki na drugą: $L_2^{-1}L_1=U_2U_1^{-1}$. Lewa strona jest dolnotrójkątna,
+prawa górnotrójkątna --- więc obie są diagonalne. A~lewa ma jedynki na
+przekątnej, więc to $I$. Odwracalność $A$ jest potrzebna, żeby móc odwrócić
+$U_1$.
+\end{intuicja}
+
+\formalnie
+Niech $A=L_1U_1=L_2U_2$, gdzie $L_1,L_2$ są jednostkowe dolnotrójkątne,
+a~$U_1,U_2$ górnotrójkątne. Mamy $\det L_i=1$, więc
+$\det U_i=\det A\ne0$ --- wszystkie cztery macierze są odwracalne.
+Mnożąc $L_1U_1=L_2U_2$ z~lewej przez $L_2^{-1}$ i~z~prawej przez $U_1^{-1}$:
+\[
+L_2^{-1}L_1=U_2U_1^{-1}.
+\]
+\begin{itemize}
+\item $L_2^{-1}$ jest jednostkowa dolnotrójkątna (zad.~3, uwaga), więc
+$L_2^{-1}L_1$ też (lemat~\ref{lem:iloczyn}).
+\item $U_1^{-1}$ jest górnotrójkątna (zad.~3), więc $U_2U_1^{-1}$ też
+(lemat~\ref{lem:iloczyn}).
+\end{itemize}
+Macierz jednocześnie dolno- i~górnotrójkątna jest diagonalna; tu ma
+jedynki na przekątnej (bo lewa strona je ma), więc
+$L_2^{-1}L_1=U_2U_1^{-1}=I$. Stąd $L_1=L_2$ i~$U_1=U_2$.
+
+\begin{uwaga}
+Bez odwracalności jednoznaczność nie zachodzi:
+\[
+\begin{bmatrix}0&0\\0&1\end{bmatrix}
+=\begin{bmatrix}1&0\\t&1\end{bmatrix}
+\begin{bmatrix}0&0\\0&1\end{bmatrix}
+\quad\text{dla każdego }t\in\R.
+\]
+Jedynki na przekątnej $L$ też są potrzebne: inaczej
+$LU=(LD)(D^{-1}U)$ dla dowolnej odwracalnej diagonalnej $D$.
+\end{uwaga}
+
+\begin{odpowiedz}
+Z~$L_1U_1=L_2U_2$ dostajemy $L_2^{-1}L_1=U_2U_1^{-1}$: lewa strona jest
+jednostkowa dolnotrójkątna, prawa górnotrójkątna, więc obie równe $I$.
+Zatem $L_1=L_2$, $U_1=U_2$.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 5. Macierz z~dominującą przekątną}
+\begin{tresc}
+Macierz ma \emph{dominującą przekątną}, jeśli każdy wyraz na przekątnej
+jest większy (na moduł) od sumy modułów pozostałych wyrazów w~jego kolumnie.
+Pokaż, że eliminacja Gaussa na takiej macierzy nie wykona nigdy permutacji
+wierszy. Pokaż, że taka macierz jest odwracalna.
+\end{tresc}
+
+\begin{teoria}[Dominacja kolumnowa]
+\begin{definicja}
+$A$ ma (ściśle) \emph{kolumnowo dominującą przekątną}, gdy dla każdego $j$
+\[
+\abs{a_{jj}}>\sum_{i\ne j}\abs{a_{ij}}.
+\]
+\end{definicja}
+„Nie wykona permutacji” rozumiemy tak: przy częściowym wyborze elementu
+głównego za każdym razem największy co do modułu wyraz w~kolumnie to już
+wyraz na przekątnej (więc zamiana nie jest potrzebna), a~w~szczególności
+pivot jest niezerowy (więc i~Gauss bez pivotingu działa).
+\end{teoria}
+
+\begin{intuicja}
+W~każdej kolumnie wyraz na przekątnej „przeważa” nad wszystkimi
+pozostałymi razem, więc tym bardziej nad każdym z~osobna --- w~pierwszym
+kroku pivot jest na swoim miejscu. Trzeba tylko sprawdzić, że po
+eliminacji pierwszej kolumny ta własność \emph{przetrwa} w~pozostałej
+macierzy $(n-1)\times(n-1)$. Przetrwa, bo odejmując od wierszy wielokrotności
+pierwszego wiersza, „przelewamy” do kolumny $j$ co najwyżej tyle, ile
+kolumna $1$ miała poza przekątną --- a~to jest mniej niż $\abs{a_{11}}$.
+Potem indukcja. Odwracalność: wszystkie pivoty $\neq0$, więc
+$\det A=\prod u_{kk}\ne0$.
+\end{intuicja}
+
+\formalnie
+\begin{lemat}\label{lem:dominacja}
+Niech $A$ ($n\ge2$) ma kolumnowo dominującą przekątną. Po jednym kroku
+eliminacji (z~pivotem $a_{11}$) pozostała macierz
+\[
+a'_{ij}=a_{ij}-\frac{a_{i1}}{a_{11}}\,a_{1j},\qquad i,j=2,\ldots,n,
+\]
+też ma kolumnowo dominującą przekątną.
+\end{lemat}
+
+\begin{proof}
+Najpierw $a_{11}\ne0$, bo $\abs{a_{11}}>\sum_{i\ne1}\abs{a_{i1}}\ge0$.
+Ustalmy $j\ge2$. Z~nierówności trójkąta
+\begin{align*}
+\sum_{\substack{i\ge2\\i\ne j}}\abs{a'_{ij}}
+&\le\sum_{\substack{i\ge2\\i\ne j}}\abs{a_{ij}}
++\frac{\abs{a_{1j}}}{\abs{a_{11}}}\sum_{\substack{i\ge2\\i\ne j}}\abs{a_{i1}}.
+\end{align*}
+Z~dominacji w~kolumnie $1$:
+$\sum_{i\ge2,\,i\ne j}\abs{a_{i1}}=\sum_{i\ge2}\abs{a_{i1}}-\abs{a_{j1}}
+<\abs{a_{11}}-\abs{a_{j1}}$, więc (z~$\le$, bo $a_{1j}$ może być $0$)
+\begin{align*}
+\sum_{\substack{i\ge2\\i\ne j}}\abs{a'_{ij}}
+&\le\sum_{\substack{i\ge2\\i\ne j}}\abs{a_{ij}}+\abs{a_{1j}}
+-\frac{\abs{a_{1j}}\abs{a_{j1}}}{\abs{a_{11}}}\\
+&=\sum_{i\ne j}\abs{a_{ij}}-\frac{\abs{a_{1j}a_{j1}}}{\abs{a_{11}}}\\
+&<\abs{a_{jj}}-\frac{\abs{a_{j1}a_{1j}}}{\abs{a_{11}}}\\
+&\le\abs{a_{jj}-\frac{a_{j1}}{a_{11}}a_{1j}}=\abs{a'_{jj}}.
+\end{align*}
+W~trzecim kroku skorzystaliśmy z~dominacji w~kolumnie $j$, w~ostatnim
+z~$\abs{x}-\abs{y}\le\abs{x-y}$.
+\end{proof}
+
+\emph{Brak permutacji.} Indukcja po $n$. Dla $n=1$ nie ma czego zamieniać
+(i~$a_{11}\ne0$, bo suma pusta to $0$). Dla $n\ge2$: w~kroku $1$ dla każdego
+$i\ge2$
+\[
+\abs{a_{i1}}\le\sum_{i'\ne1}\abs{a_{i'1}}<\abs{a_{11}},
+\]
+więc $a_{11}$ jest ściśle największy w~kolumnie --- częściowy pivoting
+wybiera wiersz $1$, zamiany nie ma. Eliminacja pierwszej kolumny daje
+w~wierszach i~kolumnach $2..n$ macierz $A'$, na której dalsze kroki
+działają dokładnie jak eliminacja Gaussa na $A'$. Z~lematu~\ref{lem:dominacja}
+$A'$ ma kolumnowo dominującą przekątną, więc z~założenia indukcyjnego
+żadnej zamiany już nie będzie.
+
+\emph{Odwracalność.} Eliminacja przechodzi bez permutacji, a~wszystkie
+pivoty są niezerowe (każdy jest wyrazem przekątnej macierzy dominującej).
+Z~tw.~\ref{tw:lu} $A=LU$, więc
+\[
+\det A=\det L\cdot\det U=1\cdot u_{11}u_{22}\cdots u_{nn}\ne0.
+\]
+
+\begin{uwaga}[Drugi dowód odwracalności]
+Wystarczy pokazać, że $A^T$ jest odwracalna ($A^T$ ma dominację
+\emph{wierszową}: $\abs{a_{jj}}>\sum_{i\ne j}\abs{a_{ij}}$, gdzie sumujemy
+po wierszu $j$ macierzy $A^T$). Niech $A^Ty=0$ i~$\abs{y_j}=\max_i\abs{y_i}$.
+Równanie $j$: $a_{jj}y_j=-\sum_{i\ne j}a_{ij}y_i$, więc
+\[
+\abs{a_{jj}}\abs{y_j}\le\sum_{i\ne j}\abs{a_{ij}}\abs{y_i}
+\le\abs{y_j}\sum_{i\ne j}\abs{a_{ij}}.
+\]
+Gdyby $y_j\ne0$, to $\abs{a_{jj}}\le\sum_{i\ne j}\abs{a_{ij}}$ ---
+sprzeczność. Więc $y=0$.
+\end{uwaga}
+
+\begin{uwaga}
+Dominacja \emph{wierszowa} nie wystarcza, żeby uniknąć zamian przy
+pivotingu: $\left[\begin{smallmatrix}1&0\\3&4\end{smallmatrix}\right]$ ma
+$\abs1>0$, $\abs4>3$, ale w~kolumnie $1$ wygrywa $3$. (Gauss \emph{bez}
+pivotingu by przeszedł --- pivoty są niezerowe, macierz jest odwracalna.)
+\end{uwaga}
+
+\begin{odpowiedz}
+Dominacja kolumnowa przenosi się na podmacierz po każdym kroku eliminacji
+(lemat~\ref{lem:dominacja}), a~w~macierzy z~dominacją wyraz $a_{11}$ jest
+ściśle największy w~kolumnie. Indukcyjnie: pivot zawsze jest na przekątnej,
+permutacji nie ma, pivoty $\ne0$, więc $\det A=\prod u_{kk}\ne0$ --- $A$ jest
+odwracalna.
+\end{odpowiedz}
+
+\end{document}

@@ -1,0 +1,396 @@
+\documentclass[11pt]{article}
+\usepackage{mn}
+
+\begin{document}
+\zestaw{1}{Operacje na „prawdziwych” liczbach: arytmetyka zmiennoprzecinkowa, utrata cyfr znaczących, norma macierzy}
+
+\begin{teoria}[Jak czytać ten dokument]
+Każde zadanie ma: przepisaną \textbf{treść} (szare pudełko), potrzebną
+\textbf{teorię} (niebieskie), \textbf{intuicję} (żółte), \textbf{rozwiązanie
+formalne} i~\textbf{odpowiedź} (zielone). Wyniki zostały sprawdzone
+numerycznie skryptem \texttt{weryfikacja/mn01.py} (Python liczy na
+\texttt{float}, czyli dokładnie w~opisanym niżej formacie \emph{double}).
+\end{teoria}
+
+% =====================================================================
+\section{Teoria: liczby zmiennoprzecinkowe}
+
+\begin{definicja}[Liczba zmiennoprzecinkowa, IEEE 754 \emph{double}]
+Liczba maszynowa (poza zerem, nieskończonościami i~liczbami
+zdenormalizowanymi) ma postać
+\[
+x=\pm(1.d_1d_2\ldots d_{52})_2\cdot 2^{e},\qquad e\in\{-1022,\ldots,1023\}.
+\]
+Część $1.d_1\ldots d_{52}$ to \emph{mantysa} (53 bity znaczące, pierwszy
+zawsze $1$), $e$ to \emph{cecha} (wykładnik). Największa liczba to
+$(2-2^{-52})\cdot2^{1023}\approx1{,}8\cdot10^{308}$.
+\end{definicja}
+
+Ważne konsekwencje:
+\begin{itemize}
+\item W~przedziale $[2^e,2^{e+1})$ liczby maszynowe są rozmieszczone
+\textbf{równomiernie} co $2^{e-52}$ (tzw.\ $\mathrm{ulp}$, \emph{unit in the
+last place}). Np.\ w~$[1,2)$ co $2^{-52}$, w~$[2,4)$ co $2^{-51}$,
+w~$[2^{53},2^{54})$ co $2$ --- liczby $2^{53}+1$ już nie da się zapisać.
+\item Każda liczba całkowita o~module $\le2^{53}$ oraz każda liczba postaci
+$m\cdot2^{k}$ z~$\abs{m}<2^{53}$ (w~zakresie wykładników) jest maszynowa.
+Liczba $0{,}1$ \textbf{nie} jest maszynowa (ma nieskończone rozwinięcie
+dwójkowe $0{,}0\overline{0011}_2$).
+\end{itemize}
+
+\begin{definicja}[Zaokrąglenie i działania maszynowe]
+$\fl(x)$ to liczba maszynowa najbliższa $x$; przy remisie (gdy $x$ leży
+dokładnie w~połowie między dwiema sąsiednimi) wybieramy tę z~\textbf{parzystą}
+ostatnią cyfrą mantysy (\emph{round half to even}). Działania maszynowe to
+\[
+x\oplusm y=\fl(x+y),\qquad x\otimesm y=\fl(x\cdot y),
+\]
+czyli: policz wynik dokładnie, potem zaokrąglij --- tak działa IEEE 754.
+\end{definicja}
+
+\begin{twierdzenie}[Standardowy model błędu]\label{tw:model}
+Jeśli wynik nie wychodzi poza zakres (brak nadmiaru i~niedomiaru), to
+\[
+\fl(x\circ y)=(x\circ y)(1+\delta),\qquad \abs{\delta}\le\eps=2^{-53}
+\approx1{,}1\cdot10^{-16}
+\]
+dla $\circ\in\{+,-,\cdot,/\}$, a~także $\fl(\sqrt x)=\sqrt x\,(1+\delta)$.
+\end{twierdzenie}
+
+\begin{proof}
+Niech $z=x\circ y\in[2^e,2^{e+1})$ (dla ujemnych symetrycznie). Sąsiednie
+liczby maszynowe są tu odległe o~$2^{e-52}$, więc najbliższa jest w~odległości
+co najwyżej połowy: $\abs{\fl(z)-z}\le2^{e-53}$. Stąd
+$\abs{\delta}=\abs{\fl(z)-z}/\abs z\le 2^{e-53}/2^{e}=2^{-53}$.
+\end{proof}
+
+\begin{uwaga}
+Wielkość $\eps=2^{-53}$ to \emph{precyzja arytmetyki} (\emph{unit roundoff});
+często nazywa się też \emph{epsilonem maszynowym} liczbę $2^{-52}$ --- odległość
+od $1$ do następnej liczby maszynowej. Różne książki używają różnych konwencji.
+\end{uwaga}
+
+\begin{intuicja}
+Każde pojedyncze działanie jest „prawie dokładne” --- względny błąd
+$\le10^{-16}$. Ale działania maszynowe to \emph{inne działania} niż
+zwykłe $+$ i~$\cdot$: po każdym kroku coś obcinamy, więc kolejność kroków
+ma znaczenie. Prawa algebry (łączność, rozdzielność) przestają obowiązywać,
+a przemienność zostaje (bo $x+y$ i~$y+x$ to ta sama liczba przed
+zaokrągleniem).
+
+Najprościej zobaczyć to w~„zabawkowym” systemie dziesiętnym z~3~cyframi
+znaczącymi: $1{,}00+0{,}004=1{,}004\to1{,}00$, więc
+$(1{,}00+0{,}004)+0{,}004=1{,}00$, a~$1{,}00+(0{,}004+0{,}004)=1{,}008\to1{,}01$.
+Małe składniki dodawane osobno „giną”, a~dodane najpierw do siebie ---
+przeżywają. W~\emph{double} robimy dokładnie to samo, tylko w~systemie
+dwójkowym z~53 cyframi.
+\end{intuicja}
+
+% =====================================================================
+\section{Zadanie 1. Dodawanie nie jest łączne}
+\begin{tresc}
+Pokaż, że dodawanie liczb zmiennoprzecinkowych nie jest łączne --- znajdź
+takie liczby $a,b,c$, dla których przy dodawaniu maszynowym
+\[
+(a+b)+c\ne a+(b+c).
+\]
+Same liczby $a,b,c$ muszą dać się dokładnie zapisać, a~dodatkowo wszystkie
+liczby oraz ich suma mają zmieścić się w~zakresie największej możliwej do
+zapisania liczby.
+\end{tresc}
+
+\begin{intuicja}
+Warunki z~treści wykluczają dwa „tanie” przykłady:
+\begin{itemize}
+\item $0{,}1+0{,}2+0{,}3$ --- tu różnica bierze się częściowo stąd, że
+$0{,}1$, $0{,}2$, $0{,}3$ w~ogóle nie są liczbami maszynowymi;
+\item $(M+M)-M=\infty\ne M=M+(M-M)$ dla największej liczby $M$ --- to
+nadmiar, a~nie błąd zaokrąglenia.
+\end{itemize}
+Chcemy więc zobaczyć \emph{czysty} efekt zaokrąglenia. Robimy to jak
+w~systemie zabawkowym: do $1$ dodajemy liczbę równą \emph{połowie} odstępu
+między $1$ a~następną liczbą maszynową. Raz --- remis, zaokrąglenie do
+parzystej, wynik wraca do $1$. Dwa razy osobno --- dwa razy wraca do $1$.
+Ale dwie połówki dodane najpierw do siebie dają cały odstęp, który już
+„widać”.
+\end{intuicja}
+
+\formalnie
+Niech $a=1$, $b=c=2^{-53}$. Wszystkie trzy są liczbami maszynowymi
+(potęgi dwójki z~zakresu), sumy są rzędu $1$, więc daleko od nadmiaru.
+
+\emph{Lewa strona.} Najbliższe liczbie $1+2^{-53}$ liczby maszynowe to $1$
+i~$1+2^{-52}$ (odstęp w~$[1,2)$ wynosi $2^{-52}$), a~$1+2^{-53}$ leży
+dokładnie pośrodku. Remis rozstrzygamy na korzyść parzystej mantysy:
+$1=(1.00\ldots0)_2$ ma ostatni bit $0$, a~$1+2^{-52}=(1.00\ldots01)_2$ --- bit
+$1$. Zatem
+\[
+a\oplusm b=\fl(1+2^{-53})=1,\qquad (a\oplusm b)\oplusm c=\fl(1+2^{-53})=1.
+\]
+
+\emph{Prawa strona.} $b\oplusm c=\fl(2^{-52})=2^{-52}$ (dokładnie), więc
+\[
+a\oplusm(b\oplusm c)=\fl(1+2^{-52})=1+2^{-52},
+\]
+bo $1+2^{-52}$ jest liczbą maszynową. Wyniki się różnią:
+\[
+(a\oplusm b)\oplusm c=1\ne1+2^{-52}=a\oplusm(b\oplusm c).
+\]
+
+\begin{uwaga}
+Ten sam mechanizm w~liczbach całkowitych: $a=2^{53}$, $b=c=1$.
+W~$[2^{53},2^{54})$ odstęp to $2$, więc $2^{53}+1$ to remis
+i~$\fl(2^{53}+1)=2^{53}$, stąd $(a\oplusm b)\oplusm c=2^{53}$, ale
+$a\oplusm(b\oplusm c)=2^{53}+2$. (To jest powód, dla którego np.\ w~JavaScripcie
+\texttt{2**53 + 1 === 2**53}.)
+\end{uwaga}
+
+\begin{odpowiedz}
+W~\emph{double}: $a=1$, $b=c=2^{-53}$. Wtedy
+$(a+b)+c=1$, a~$a+(b+c)=1+2^{-52}$ --- dodawanie maszynowe nie jest łączne.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 2. Mnożenie nie jest rozdzielne względem dodawania}
+\begin{tresc}
+To samo co zadanie~1, ale dla rozdzielności mnożenia względem dodawania:
+znajdź $a,b,c$ (dokładnie zapisywalne, bez wychodzenia poza zakres), dla
+których przy działaniach maszynowych
+\[
+a\cdot(b+c)\ne a\cdot b+a\cdot c.
+\]
+\end{tresc}
+
+\begin{intuicja}
+Ten sam trik: $b+c$ ma „zgubić” mały składnik $c$, ale po pomnożeniu przez
+$a$ ten składnik ma być już na tyle duży, żeby przeżył dodawanie $ab+ac$.
+Mnożenie przez $a=3$ zmienia skalę: $3$ leży w~$[2,4)$, gdzie odstęp to
+$2^{-51}$, a $3c=\tfrac34\cdot2^{-51}$ jest \emph{większe niż pół odstępu},
+więc zaokrągla się w~górę. Uwaga: $a$ nie może być potęgą dwójki ---
+mnożenie przez $2^k$ jest dokładne i~niczego nie zmienia.
+\end{intuicja}
+
+\formalnie
+Niech $a=3$, $b=1$, $c=2^{-53}$ (wszystkie maszynowe, wyniki rzędu $3$).
+
+\emph{Lewa strona.} Jak w~zadaniu~1: $b\oplusm c=\fl(1+2^{-53})=1$ (remis,
+do parzystej), więc $a\otimesm(b\oplusm c)=\fl(3\cdot1)=3$.
+
+\emph{Prawa strona.} $a\otimesm b=3$ oraz $a\otimesm c=\fl(3\cdot2^{-53})=3\cdot2^{-53}$
+(dokładnie: $3\cdot2^{-53}$ ma mantysę $(1.1)_2$). Teraz
+\[
+3+3\cdot2^{-53}=3+\tfrac34\cdot2^{-51}.
+\]
+W~$[2,4)$ sąsiednie liczby maszynowe to $3$ i~$3+2^{-51}$. Odległość od $3$
+to $\tfrac34\cdot2^{-51}$, od $3+2^{-51}$ --- $\tfrac14\cdot2^{-51}$, więc
+\[
+(a\otimesm b)\oplusm(a\otimesm c)=3+2^{-51}\ne3=a\otimesm(b\oplusm c).
+\]
+
+\begin{uwaga}
+Warunek „bez wychodzenia poza zakres” wyklucza np.\ $a=2$, $b=M$, $c=-M$
+($M$ --- największa liczba): $2(M-M)=0$, ale $2M=\infty$ i~$\infty-\infty=\mathrm{NaN}$.
+\end{uwaga}
+
+\begin{odpowiedz}
+$a=3$, $b=1$, $c=2^{-53}$: $\;a(b+c)=3$, a~$ab+ac=3+2^{-51}$.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 3. Pierwiastki równania kwadratowego bez \emph{catastrophic cancellation}}
+\begin{tresc}
+Dane są $A,B,C\in[0,20]$, gdzie $B>10$. Zaproponuj algorytm obliczania
+pierwiastków równania kwadratowego $Ax^2+Bx+C=0$, w~którym nie wystąpi
+zjawisko \emph{catastrophic cancellation}.
+\end{tresc}
+
+\begin{teoria}[Utrata cyfr znaczących]
+\begin{definicja}[Błąd względny]
+Jeśli $\tilde x$ przybliża $x\ne0$, to błąd względny to
+$\abs{\tilde x-x}/\abs x$. Błąd względny $10^{-k}$ $\approx$ „$k$ poprawnych
+cyfr znaczących”.
+\end{definicja}
+
+\begin{lemat}[Odejmowanie bliskich liczb]\label{lem:cancel}
+Niech $\tilde x=x(1+\delta_1)$, $\tilde y=y(1+\delta_2)$, $\abs{\delta_i}\le\delta$.
+Wtedy
+\[
+\frac{\abs{(\tilde x-\tilde y)-(x-y)}}{\abs{x-y}}
+=\frac{\abs{x\delta_1-y\delta_2}}{\abs{x-y}}
+\le\delta\cdot\frac{\abs x+\abs y}{\abs{x-y}}.
+\]
+Natomiast dla $x,y$ \textbf{tego samego znaku}
+\[
+\frac{\abs{(\tilde x+\tilde y)-(x+y)}}{\abs{x+y}}
+\le\delta\cdot\frac{\abs x+\abs y}{\abs{x+y}}=\delta.
+\]
+\end{lemat}
+
+Czynnik $\frac{\abs x+\abs y}{\abs{x-y}}$ jest ogromny, gdy $x\approx y$:
+samo odejmowanie liczone jest (prawie) dokładnie, ale wzmacnia błędy, które
+\emph{już siedziały} w~$\tilde x,\tilde y$. To jest \textbf{catastrophic
+cancellation}: wiodące (poprawne) cyfry się skracają, zostają same
+„śmieciowe”. Dodawanie liczb tego samego znaku błędu nie wzmacnia.
+\end{teoria}
+
+\begin{intuicja}
+Szkolny wzór $x_{1,2}=\frac{-B\pm\sqrt{\Delta}}{2A}$ ma pułapkę: gdy
+$4AC\ll B^2$, to $\sqrt\Delta\approx B$ i~w~$-B+\sqrt\Delta$ odejmujemy dwie
+prawie równe liczby. Przykład: $A=C=10^{-9}$, $B=20$. Wtedy
+$\Delta=400-4\cdot10^{-18}$ zaokrągla się do $400$, $\sqrt\Delta=20$
+i~wzór daje $x_1=0$, a~prawdziwy pierwiastek to $\approx-5\cdot10^{-11}$
+--- \emph{zero} poprawnych cyfr.
+
+Ratunek: liczymy tylko ten pierwiastek, w~którym nic się nie skraca
+(ponieważ $B>0$, jest to ten ze znakiem „$-$”: $-B-\sqrt\Delta$, suma dwóch
+liczb ujemnych), a~drugi bierzemy ze wzorów Viète'a $x_1x_2=C/A$ --- dzielenie
+też nie skraca cyfr.
+\end{intuicja}
+
+\formalnie
+\begin{algorithm}[H]
+\caption{Pierwiastki $Ax^2+Bx+C=0$, $B>10$}
+\begin{algorithmic}[1]
+\State $\Delta\gets B\cdot B-4\cdot A\cdot C$
+\If{$\Delta\ge0$}
+  \State $q\gets-\bigl(B+\sqrt\Delta\bigr)/2$ \Comment{$q\le-5$}
+  \State $x_2\gets C/q$
+  \If{$A=0$} \Return $\{x_2\}$ \Comment{równanie liniowe}
+  \EndIf
+  \State $x_1\gets q/A$
+  \State \Return $\{x_1,x_2\}$
+\Else
+  \State $r\gets-B/(2A)$,\quad $s\gets\sqrt{-\Delta}/(2A)$
+  \State \Return $\{r+is,\ r-is\}$
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\emph{Poprawność.} Gdy $\Delta\ge0$: $q=-\frac{B+\sqrt\Delta}{2}$, czyli
+$q/A=\frac{-B-\sqrt\Delta}{2A}$ to jeden ze szkolnych pierwiastków. Sprawdźmy,
+że $C/q$ to drugi --- wystarczą wzory Viète'a. Iloczyn:
+$\frac qA\cdot\frac Cq=\frac CA$. Suma: ponieważ $\Delta=B^2-4AC$,
+\begin{align*}
+q^2&=\frac{B^2+2B\sqrt\Delta+\Delta}{4}=\frac{2B^2+2B\sqrt\Delta-4AC}{4},\\
+q^2+AC&=\frac{B(B+\sqrt\Delta)}{2}=-Bq,\\
+\frac qA+\frac Cq&=\frac{q^2+AC}{Aq}=-\frac BA.
+\end{align*}
+Gdy $A=0$, równanie to $Bx+C=0$ i~$x=-C/B$; wtedy $\Delta=B^2$, $q=-B$
+i~faktycznie $x_2=C/q=-C/B$. Dzielenie przez $q$ jest bezpieczne, bo
+$\abs q\ge B/2>5$. Gdy $\Delta<0$ (możliwe, np.\ $A=C=20$, $B=11$),
+musi być $A>0$ i~pierwiastki są zespolone sprzężone.
+
+\emph{Brak catastrophic cancellation.} Na podstawie lematu~\ref{lem:cancel}:
+\begin{itemize}
+\item $B+\sqrt\Delta$ to suma dwóch liczb nieujemnych --- błąd względny się
+nie wzmacnia;
+\item $q/A$, $C/q$, $-B/(2A)$, $\sqrt{-\Delta}/(2A)$ to mnożenia, dzielenia
+i~pierwiastki --- każde dokłada tylko $\le\eps$ do błędu względnego
+(tw.~\ref{tw:model}), błędy względne się \emph{dodają}, nie mnożą przez
+duży czynnik;
+\item w~przypadku zespolonym część rzeczywistą i~urojoną liczymy osobno,
+nic nie odejmujemy.
+\end{itemize}
+Jedyne odejmowanie to $\Delta=B^2-4AC$. Gdy $B^2\approx4AC$ (pierwiastek
+prawie podwójny), tu również tracimy cyfry --- ale to nie wina algorytmu:
+wtedy \emph{samo zadanie} jest źle uwarunkowane (zmiana współczynnika
+o~$10^{-16}$ przesuwa podwójny pierwiastek o~$\approx10^{-8}$; żaden algorytm
+nie da lepszej odpowiedzi z~zaokrąglonych danych). Jeśli zależy nam na
+dokładnym $\Delta$, liczymy go w~podwójnej precyzji albo sztuczką Kahana
+z~\texttt{fma}: $p=\fl(B^2)$, $d_p=\mathrm{fma}(B,B,-p)$ (dokładny błąd
+zaokrąglenia $p$), analogicznie $q'=\fl(4AC)$ i~$d_q$, a~potem
+$\Delta=(p-q')+(d_p-d_q)$.
+
+\begin{uwaga}
+Założenie $B>10$ gwarantuje, że $B\neq0$ i~znamy jego znak, więc wiemy,
+którego znaku użyć (ogólnie: $q=-\tfrac12\bigl(B+\operatorname{sgn}(B)\sqrt\Delta\bigr)$),
+oraz że $q$ jest daleko od zera.
+\end{uwaga}
+
+\begin{odpowiedz}
+Gdy $\Delta=B^2-4AC\ge0$:
+\[
+q=-\frac{B+\sqrt\Delta}{2},\qquad x_1=\frac qA,\qquad x_2=\frac Cq
+\]
+(dla $A=0$ tylko $x_2=-C/B$). Gdy $\Delta<0$: $x_{1,2}=\frac{-B}{2A}\pm
+i\,\frac{\sqrt{-\Delta}}{2A}$. Nigdzie nie odejmujemy bliskich liczb.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 4. Norma macierzy \texorpdfstring{$\left[\begin{smallmatrix}2&1\\1&2\end{smallmatrix}\right]$}{[[2,1],[1,2]]}}
+\begin{tresc}
+Na ćwiczeniach zdefiniowaliśmy normę (długość) wektora w~$\R^n$.
+Zdefiniujmy \emph{normę macierzy} $A\in\R^{n\times n}$ następująco:
+\[
+\norm A=\max_{x:\norm x=1}\frac{\norm{A\cdot x}}{\norm x}.
+\]
+(\ldots czyli „jak bardzo macierz $A$ jest w~stanie wydłużyć wektor”.)
+Posługując się tą definicją znaleźć normę macierzy
+\[
+\begin{bmatrix}2&1\\1&2\end{bmatrix}.
+\]
+Preferowane są środki dostępne w~tym momencie --- proszę unikać wartości
+własnych i~wartości szczególnych.
+\end{tresc}
+
+\begin{teoria}[Norma wektora i~norma macierzy]
+\begin{definicja}[Norma euklidesowa]
+$\norm x=\sqrt{x_1^2+\dots+x_n^2}$ --- zwykła długość wektora.
+\end{definicja}
+
+\begin{fakt}
+Maksimum w~definicji $\norm A$ istnieje: sfera $\{x:\norm x=1\}$ jest
+domknięta i~ograniczona, a~$x\mapsto\norm{Ax}$ ciągła. Ponadto
+$\norm{A(tx)}/\norm{tx}=\norm{Ax}/\norm x$, więc to samo wyjdzie, biorąc
+maksimum po \emph{wszystkich} $x\ne0$. W~szczególności
+$\norm{Ax}\le\norm A\norm x$ dla każdego $x$.
+\end{fakt}
+
+Żeby udowodnić $\norm A=M$, trzeba pokazać dwie rzeczy:
+\begin{enumerate}
+\item \emph{ograniczenie}: $\norm{Ax}\le M$ dla każdego $\norm x=1$;
+\item \emph{osiągalność}: istnieje $x$ z~$\norm x=1$ i~$\norm{Ax}=M$.
+\end{enumerate}
+\end{teoria}
+
+\begin{intuicja}
+Macierz jest symetryczna i~„miesza” współrzędne: $A(x_1,x_2)=(2x_1+x_2,\
+x_1+2x_2)$. Wektor $(1,1)$ przechodzi na $(3,3)$ --- wydłuża się $3$ razy.
+Wektor $(1,-1)$ przechodzi na $(1,-1)$ --- nie zmienia się. Wszystkie inne
+kierunki to „mieszanka” tych dwóch, więc wydłużenie jest gdzieś
+pomiędzy $1$ a~$3$. Odpowiedź: $3$.
+\end{intuicja}
+
+\formalnie
+Niech $\norm x=1$, czyli $x_1^2+x_2^2=1$. Wtedy
+\begin{align*}
+\norm{Ax}^2&=(2x_1+x_2)^2+(x_1+2x_2)^2\\
+&=5x_1^2+8x_1x_2+5x_2^2\\
+&=5(x_1^2+x_2^2)+8x_1x_2=5+8x_1x_2.
+\end{align*}
+\emph{Ograniczenie.} Z~$(x_1-x_2)^2\ge0$ mamy $2x_1x_2\le x_1^2+x_2^2=1$, więc
+\[
+\norm{Ax}^2=5+4\cdot2x_1x_2\le5+4=9,\qquad\norm{Ax}\le3.
+\]
+\emph{Osiągalność.} Równość jest dla $x_1=x_2$, czyli
+$x=\bigl(\tfrac1{\sqrt2},\tfrac1{\sqrt2}\bigr)$:
+$Ax=\bigl(\tfrac3{\sqrt2},\tfrac3{\sqrt2}\bigr)$, $\norm{Ax}=3$.
+
+Zatem $\norm A=3$. (Z~parametryzacją $x=(\cos t,\sin t)$ ten sam rachunek
+daje $\norm{Ax}^2=5+4\sin2t$, co wprost pokazuje, że wydłużenie zmienia się
+od $1$ do $3$.)
+
+\begin{uwaga}
+Dla porównania (spoza „dozwolonych środków”): $A$ jest symetryczna z~wartościami
+własnymi $3$ i~$1$ (wektory $(1,1)$ i~$(1,-1)$ z~intuicji), a~dla macierzy
+symetrycznej norma euklidesowa to największy moduł wartości własnej
+--- zgadza się. Dla norm $\norm{\cdot}_1$ i~$\norm{\cdot}_\infty$ normy macierzy to
+odpowiednio maksymalna suma modułów w~kolumnie i~w~wierszu --- tu też $3$.
+\end{uwaga}
+
+\begin{odpowiedz}
+$\norm{\left[\begin{smallmatrix}2&1\\1&2\end{smallmatrix}\right]}=3$,
+osiągana dla $x=\frac1{\sqrt2}(1,1)$.
+\end{odpowiedz}
+
+\end{document}
