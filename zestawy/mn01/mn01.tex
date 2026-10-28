@@ -7,7 +7,9 @@
 \begin{teoria}[Jak czytać ten dokument]
 Każde zadanie ma: przepisaną \textbf{treść} (szare pudełko), potrzebną
 \textbf{teorię} (niebieskie), \textbf{intuicję} (żółte), \textbf{rozwiązanie
-formalne} i~\textbf{odpowiedź} (zielone). Wyniki zostały sprawdzone
+formalne} i~\textbf{odpowiedź} (zielone). W~teorii są też
+\textbf{przykłady} (turkusowe) i~wersja \textbf{po ludzku} (fioletowe) ---
+to samo co w~definicjach, ale bez formalizmu. Wyniki zostały sprawdzone
 numerycznie skryptem \texttt{weryfikacja/mn01.py} (Python liczy na
 \texttt{float}, czyli dokładnie w~opisanym niżej formacie \emph{double}).
 \end{teoria}
@@ -38,6 +40,38 @@ Liczba $0{,}1$ \textbf{nie} jest maszynowa (ma nieskończone rozwinięcie
 dwójkowe $0{,}0\overline{0011}_2$).
 \end{itemize}
 
+\begin{przyklad}[Przykład: jak zapisują się konkretne liczby]
+\begin{itemize}
+\item $5=101_2=(1.01)_2\cdot2^2$, czyli mantysa $1.01000\ldots0$
+i~cecha $e=2$.
+\item $0{,}75=\tfrac12+\tfrac14=(0.11)_2=(1.1)_2\cdot2^{-1}$, czyli
+cecha $e=-1$.
+\item $0{,}1$ trzeba uciąć po 53 bitach. W~\emph{double} jest to
+dokładnie
+\begin{align*}
+\fl(0{,}1)&=3602879701896397\cdot2^{-55}\\
+&=0{,}1000000000000000055\ldots
+\end{align*}
+\item Dlatego w~Pythonie
+\begin{center}\texttt{0.1 + 0.2 == 0.3}\end{center}
+daje \texttt{False} (lewa strona to \texttt{0.30000000000000004}):
+każda z~trzech liczb jest już zaokrąglona, i~to w~różne strony.
+\item $2^{53}+1$ nie istnieje: \texttt{float(2**53+1)} to $2^{53}$.
+Odstęp między liczbami jest tam równy $2$.
+\end{itemize}
+\end{przyklad}
+
+\begin{poludzku}
+To jest notacja naukowa, jak $6{,}02\cdot10^{23}$, tylko w~dwójkowym:
+„jakieś $53$ cyfry” razy „przesuń przecinek o~$e$ miejsc”. Liczba cyfr
+jest \emph{stała}, więc im większa liczba, tym większe dziury między
+sąsiednimi liczbami maszynowymi. To jak linijka, na której kreski są
+gęsto przy zerze i~coraz rzadziej dalej. Między $1$ a~$2$ kreski są co
+$2^{-52}\approx2\cdot10^{-16}$. Przy $10^{16}$ są już co $2$, więc nie da
+się zapisać każdej liczby całkowitej. Liczby, która nie trafia w~kreskę
+(np.\ $0{,}1$), komputer nie zna, więc bierze najbliższą kreskę.
+\end{poludzku}
+
 \begin{definicja}[Zaokrąglenie i działania maszynowe]
 $\fl(x)$ to liczba maszynowa najbliższa $x$; przy remisie (gdy $x$ leży
 dokładnie w~połowie między dwiema sąsiednimi) wybieramy tę z~\textbf{parzystą}
@@ -47,6 +81,25 @@ x\oplusm y=\fl(x+y),\qquad x\otimesm y=\fl(x\cdot y),
 \]
 czyli: policz wynik dokładnie, potem zaokrąglij --- tak działa IEEE 754.
 \end{definicja}
+
+\begin{przyklad}[Przykład: remis i~„do parzystej”]
+W~$[2^{53},2^{54})$ liczby maszynowe to $2^{53},2^{53}+2,2^{53}+4,\ldots$
+Liczba $2^{53}+1$ leży dokładnie w~połowie między $2^{53}$ (ostatni bit
+mantysy $0$) a~$2^{53}+2$ (ostatni bit $1$), więc
+$\fl(2^{53}+1)=2^{53}$. Z~kolei $2^{53}+3$ leży w~połowie między
+$2^{53}+2$ (bit $1$) a~$2^{53}+4$ (bit $0$), więc
+$\fl(2^{53}+3)=2^{53}+4$. Raz w~dół, raz w~górę. To samo robi
+\texttt{round} w~Pythonie: \texttt{round(2.5)} daje $2$, a~\texttt{round(3.5)}
+daje $4$.
+\end{przyklad}
+
+\begin{poludzku}
+Komputer liczy wynik „idealnie”, a~potem zaokrągla go do najbliższej
+kreski na linijce. Gdy wynik wypada dokładnie w~połowie, nie zaokrągla
+zawsze w~górę (jak w~szkole), tylko do „parzystej” kreski. Dzięki temu
+przy wielu remisach błędy raz idą w~górę, raz w~dół i~się znoszą,
+zamiast się sumować.
+\end{poludzku}
 
 \begin{twierdzenie}[Standardowy model błędu]\label{tw:model}
 Jeśli wynik nie wychodzi poza zakres (brak nadmiaru i~niedomiaru), to
@@ -63,6 +116,22 @@ liczby maszynowe są tu odległe o~$2^{e-52}$, więc najbliższa jest w~odległo
 co najwyżej połowy: $\abs{\fl(z)-z}\le2^{e-53}$. Stąd
 $\abs{\delta}=\abs{\fl(z)-z}/\abs z\le 2^{e-53}/2^{e}=2^{-53}$.
 \end{proof}
+
+\begin{przyklad}[Przykład: ile psuje dzielenie $1/3$]
+Licząc dokładnie na ułamkach, $\fl(1/3)=\tfrac13(1+\delta)$ z~$\abs\delta=
+2^{-54}\approx5{,}6\cdot10^{-17}$. To połowa dopuszczalnego $\eps$. Z~kolei
+$\fl(2^{53}+1)$ z~przykładu wyżej ma
+$\abs\delta=1/(2^{53}+1)\approx\eps$, czyli tu oszacowanie jest prawie
+osiągnięte.
+\end{przyklad}
+
+\begin{poludzku}
+Każde pojedyncze działanie myli się najwyżej na mniej więcej
+$16$.\ cyfrze znaczącej, i~to \emph{względnie}. Nieważne, czy liczymy
+na liczbach rzędu $10^{-100}$, czy $10^{100}$: wynik ma zawsze około
+$16$ dobrych cyfr. Kłopoty zaczynają się dopiero wtedy, gdy wiele
+takich małych błędów zostanie złożonych w~złej kolejności (zadania 1--3).
+\end{poludzku}
 
 \begin{uwaga}
 Wielkość $\eps=2^{-53}$ to \emph{precyzja arytmetyki} (\emph{unit roundoff});
@@ -235,6 +304,31 @@ cancellation}: wiodące (poprawne) cyfry się skracają, zostają same
 „śmieciowe”. Dodawanie liczb tego samego znaku błędu nie wzmacnia.
 \end{teoria}
 
+\begin{przyklad}[Przykład: odejmowanie zjada cyfry]
+\begin{itemize}
+\item Na kartce, z~4 cyframi znaczącymi: $x=1{,}23456\to1{,}235$,
+$y=1{,}23412\to1{,}234$. Każde z~nich ma błąd względny $<0{,}05\%$.
+Ale $x-y=0{,}00044$, a~my dostajemy $0{,}001$, czyli błąd ponad
+$100\%$. Czynnik z~lematu to
+$\frac{\abs x+\abs y}{\abs{x-y}}\approx\frac{2{,}47}{0{,}00044}\approx5600$.
+\item W~\emph{double}: \texttt{(1 + 1e-15) - 1} daje
+$1{,}1102\ldots\cdot10^{-15}$ zamiast $10^{-15}$, czyli błąd względny
+$11\%$. Samo odejmowanie było dokładne. Błąd siedział już w~$\fl(1+10^{-15})$,
+a~odejmowanie tylko go „odsłoniło”.
+\item Za to $1{,}235+1{,}234=2{,}469$ przy prawdziwym $2{,}46868$ ---
+błąd względny $0{,}01\%$, tyle co na wejściu.
+\end{itemize}
+\end{przyklad}
+
+\begin{poludzku}
+Wyobraź sobie, że ważysz ciężarówkę z~kierowcą i~bez kierowcy na wadze
+z~dokładnością do $10$\,kg, i~odejmujesz wyniki, żeby poznać wagę
+kierowcy. Obie ważone liczby są świetne (błąd $0{,}1\%$), ale różnica
+($\approx80$\,kg) może wyjść $70$ albo $90$. Odejmowanie dwóch bliskich,
+\emph{lekko niedokładnych} liczb zostawia prawie same błędy. Dodawanie
+takiego problemu nie ma.
+\end{poludzku}
+
 \begin{intuicja}
 Szkolny wzór $x_{1,2}=\frac{-B\pm\sqrt{\Delta}}{2A}$ ma pułapkę: gdy
 $4AC\ll B^2$, to $\sqrt\Delta\approx B$ i~w~$-B+\sqrt\Delta$ odejmujemy dwie
@@ -354,6 +448,26 @@ $\norm{Ax}\le\norm A\norm x$ dla każdego $x$.
 \item \emph{osiągalność}: istnieje $x$ z~$\norm x=1$ i~$\norm{Ax}=M$.
 \end{enumerate}
 \end{teoria}
+
+\begin{przyklad}[Przykład: normy prostych macierzy]
+\begin{itemize}
+\item $\norm{(3,4)}=\sqrt{9+16}=5$.
+\item $D=\left[\begin{smallmatrix}2&0\\0&\frac12\end{smallmatrix}\right]$:
+$\norm{Dx}^2=4x_1^2+\tfrac14x_2^2\le4(x_1^2+x_2^2)$, więc
+$\norm{Dx}\le2\norm x$ (ograniczenie), a~$De_1=2e_1$ (osiągalność).
+Zatem $\norm D=2$ --- największy „współczynnik rozciągnięcia”.
+\item Obrót $\left[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\right]$
+nie zmienia długości żadnego wektora, więc ma normę $1$.
+\end{itemize}
+\end{przyklad}
+
+\begin{poludzku}
+Macierz to maszynka, która bierze strzałkę i~zwraca inną strzałkę. Norma
+macierzy odpowiada na pytanie: \emph{ile najwyżej razy} maszynka potrafi
+wydłużyć strzałkę? Sprawdzamy wszystkie strzałki długości $1$ i~patrzymy,
+która wyjdzie najdłuższa. Dla macierzy diagonalnej to po prostu
+największy (co do modułu) wyraz na przekątnej.
+\end{poludzku}
 
 \begin{intuicja}
 Macierz jest symetryczna i~„miesza” współrzędne: $A(x_1,x_2)=(2x_1+x_2,\

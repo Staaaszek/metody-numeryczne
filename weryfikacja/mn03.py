@@ -172,3 +172,29 @@ for a, (na, f) in enumerate(funs):
         else:
             assert math.isclose(val, 2.0 if na == "1" else 1.0, rel_tol=1e-12), (na, val)
 print("Zadanie 6: ortogonalność, ||1|| = sqrt 2, pozostałe normy 1  OK")
+
+# Przykłady w teorii
+for x1 in range(-5, 6):
+    for x2 in range(-5, 6):
+        q = 2 * x1 * x1 - 2 * x1 * x2 + 2 * x2 * x2
+        assert q == x1 * x1 + x2 * x2 + (x1 - x2) ** 2
+assert 1 * 1 + 2 * 2 * 1 * (-1) + 1 == -2
+A = [[1, 2], [3, 4]]
+assert matmul(T(A), A) == [[10, 14], [14, 20]] and matmul(A, [[1], [-1]]) == [[-1], [-1]]
+assert matmul(T([[1, 1], [1, 1]]), [[1, 1], [1, 1]]) == [[2, 2], [2, 2]]
+G = [[2, 0, 0], [1, 3, 0], [-1, 1, 2]]
+assert matmul(G, T(G)) == [[4, 2, -2], [2, 10, 2], [-2, 2, 6]]
+s5 = math.sqrt(5)
+v1, v2 = (1 / s5, 2 / s5), (2 / s5, -1 / s5)
+c1, c2 = 3 * v1[0] + 1 * v1[1], 3 * v2[0] + 1 * v2[1]
+assert math.isclose(c1, s5) and math.isclose(c2, s5)
+Q = [[F(3, 5), F(-4, 5)], [F(4, 5), F(3, 5)]]
+assert matmul(T(Q), Q) == eye(2) and matmul(Q, [[5], [0]]) == [[3], [4]]
+u = [[F(2)], [F(-4)]]
+H = [[eye(2)[i][j] - 2 * u[i][0] * u[j][0] / 20 for j in range(2)] for i in range(2)]
+assert H == [[F(3, 5), F(4, 5)], [F(4, 5), F(-3, 5)]] and matmul(H, [[3], [4]]) == [[5], [0]]
+Gv = [[F(3, 5), F(4, 5)], [F(-4, 5), F(3, 5)]]
+assert matmul(Gv, [[3], [4]]) == [[5], [0]]
+for t in [0.1 * k for k in range(63)]:
+    assert math.isclose(math.cos(t) * math.cos(2 * t), (math.cos(t) + math.cos(3 * t)) / 2, abs_tol=1e-12)
+print("Przykłady z teorii  OK")

@@ -144,3 +144,29 @@ for n in range(1, 10):
 # dominacja wierszowa nie wystarcza
 assert gauss([[1, 0], [3, 4]], pivoting=True)[3] == 1
 print("ok  zad5")
+
+# Przykłady w teorii
+A = [[2, 1, 1], [4, 3, 3], [8, 7, 9]]
+L, U, perm, zamiany, piv, _ = gauss(A)
+assert L == [[1, 0, 0], [2, 1, 0], [4, 3, 1]] and U == [[2, 1, 1], [0, 1, 1], [0, 0, 2]]
+assert matmul(L, U) == A and piv == [2, 1, 2]
+assert [det([r[:k] for r in A[:k]]) for k in (1, 2, 3)] == [2, 2, 4]
+assert matmul(A, [[1], [1], [2]]) == [[5], [13], [33]]
+assert matmul(U, [[1], [1], [2]]) == [[5], [3], [4]] and matmul(L, [[5], [3], [4]]) == [[5], [13], [33]]
+V = [[1, 0, 0], [1, 1, 1], [1, 2, 4]]
+assert matmul(V, [[1], [1], [1]]) == [[1], [3], [7]]
+assert matmul([[1, 2], [0, 3]], [[4, 5], [0, 6]]) == [[4, 17], [0, 18]]
+assert kolumnowo_dominujaca([[4, 1, -1], [1, -5, 2], [2, 3, 6]])
+assert not kolumnowo_dominujaca([[1, 2], [3, 4]])
+# pivoting: [[eps,1],[1,1]] x = [1,2] w double
+e = 1e-20
+l = 1 / e
+u22 = 1 - l
+x2 = (2 - l * 1) / u22
+x1 = (1 - x2) / e
+assert u22 == -1e20 and (x1, x2) == (0.0, 1.0)
+u22 = 1 - e * 1
+x2 = (1 - e * 2) / u22
+x1 = (2 - x2) / 1
+assert u22 == 1.0 and (x1, x2) == (1.0, 1.0)
+print("ok  przykłady z teorii")

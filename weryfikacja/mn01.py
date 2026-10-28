@@ -92,3 +92,19 @@ for k in range(100000):
     best = max(best, n2)
 assert math.isclose(math.sqrt(best), 3)
 print("ok  zad4")
+
+# Przykłady w teorii
+assert F(5.0) == F(0b101) and F(0.75) == F(0b11, 4)
+assert F(0.1) == F(3602879701896397, 2**55)
+assert 0.1 + 0.2 == 0.30000000000000004 and 0.1 + 0.2 != 0.3
+assert float(2**53 + 1) == 2**53 and float(2**53 + 3) == 2**53 + 4
+assert round(2.5) == 2 and round(3.5) == 4
+assert abs(F(1 / 3) - F(1, 3)) / F(1, 3) == F(1, 2**54)
+y = (1 + 1e-15) - 1
+assert F(y) == F(1 + 1e-15) - 1 and math.isclose(abs(y - 1e-15) / 1e-15, 0.11, abs_tol=0.001)
+x, yy = 1.23456, 1.23412  # przykład z 4 cyframi znaczącymi
+assert round(x, 3) == 1.235 and round(yy, 3) == 1.234
+assert math.isclose(abs(0.001 - (x - yy)) / (x - yy), 1.27, abs_tol=0.01)
+assert math.isclose((x + yy) / (x - yy), 5611, rel_tol=1e-3)
+assert math.isclose(abs(2.469 - (x + yy)) / (x + yy), 1.3e-4, rel_tol=0.01)
+print("ok  przykłady z teorii")

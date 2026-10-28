@@ -7,7 +7,9 @@
 \begin{teoria}[Jak czytać ten dokument]
 Każde zadanie ma: przepisaną \textbf{treść} (szare pudełko), potrzebną
 \textbf{teorię} (niebieskie), \textbf{intuicję} (żółte), \textbf{rozwiązanie
-formalne} i~\textbf{odpowiedź} (zielone). Wyniki zostały sprawdzone
+formalne} i~\textbf{odpowiedź} (zielone). W~teorii są też
+\textbf{przykłady} (turkusowe) i~wersja \textbf{po ludzku} (fioletowe) ---
+to samo co w~definicjach, ale bez formalizmu. Wyniki zostały sprawdzone
 skryptem \texttt{weryfikacja/mn03.py} (algebra liniowa dokładnie na
 ułamkach, pierwiastki i~całki numerycznie). Wektory są kolumnowe,
 $x^Ty=\langle x,y\rangle=\sum_ix_iy_i$, $\norm x=\sqrt{x^Tx}$, $e_i$ to
@@ -28,6 +30,34 @@ wielomian stopnia $2$ od współrzędnych $x$. Dodatnia określoność mówi, ż
 ta „miska” ma jedyne minimum $0$ w~punkcie $x=0$. Zwykle (tak jak na
 wykładzie) interesują nas macierze \emph{symetryczne} dodatnio określone.
 
+\begin{przyklad}[Przykład: jedna jest, druga nie]
+\begin{itemize}
+\item $C=\left[\begin{smallmatrix}2&-1\\-1&2\end{smallmatrix}\right]$:
+\begin{align*}
+x^TCx&=2x_1^2-2x_1x_2+2x_2^2\\
+&=x_1^2+x_2^2+(x_1-x_2)^2.
+\end{align*}
+Suma kwadratów, zero tylko dla $x_1=x_2=0$. \textbf{Jest} dodatnio
+określona.
+\item $C=\left[\begin{smallmatrix}1&2\\2&1\end{smallmatrix}\right]$ ma
+dodatnie wszystkie wyrazy, a~jednak dla $x=(1,-1)$:
+$x^TCx=1-4+1=-2<0$. \textbf{Nie jest} dodatnio określona. Dodatnie
+liczby w~środku nic nie gwarantują.
+\item $C=\left[\begin{smallmatrix}1&0\\0&0\end{smallmatrix}\right]$:
+$x^TCx=x_1^2\ge0$, ale dla $x=(0,1)$ wychodzi $0$. Jest tylko
+\emph{pół}określona.
+\end{itemize}
+\end{przyklad}
+
+\begin{poludzku}
+Dla liczby $c$ wyrażenie $cx^2$ jest dodatnie dla każdego $x\ne0$
+dokładnie wtedy, gdy $c>0$. Macierz dodatnio określona to macierzowa
+wersja „liczby dodatniej”: wstawiasz dowolny niezerowy wektor do
+$x^TCx$ i~zawsze dostajesz liczbę dodatnią. Wykres $x^TCx$ to miska
+otwarta do góry, z~dnem w~zerze. Żeby pokazać, że macierz \emph{nie}
+jest dodatnio określona, wystarczy jeden „zły” wektor.
+\end{poludzku}
+
 \begin{fakt}\label{fakt:proste}
 Niech $C$ będzie dodatnio określona. Wtedy:
 \begin{enumerate}
@@ -44,6 +74,15 @@ Dla każdej $A$ macierz $A^TA$ jest dodatnio półokreślona, bo
 $x^TA^TAx=\norm{Ax}^2\ge0$. Jeśli kolumny $A$ są liniowo niezależne, to
 $Ax\ne0$ dla $x\ne0$, więc $A^TA$ jest dodatnio określona.
 \end{fakt}
+
+\begin{przyklad}
+Dla $A=\left[\begin{smallmatrix}1&2\\3&4\end{smallmatrix}\right]$ jest
+$A^TA=\left[\begin{smallmatrix}10&14\\14&20\end{smallmatrix}\right]$
+i~np.\ dla $x=(1,-1)$: $x^TA^TAx=10-28+20=2=\norm{(-1,-1)}^2=\norm{Ax}^2$.
+Za to dla $A=\left[\begin{smallmatrix}1&1\\1&1\end{smallmatrix}\right]$
+(kolumny równe) $A^TA=\left[\begin{smallmatrix}2&2\\2&2\end{smallmatrix}
+\right]$ i~$x=(1,-1)$ daje $0$ --- tylko półokreślona.
+\end{przyklad}
 
 \begin{twierdzenie}[Rozkład Cholesky'ego]\label{tw:chol}
 Każda symetryczna dodatnio określona $A$ ma rozkład $A=LL^T$, gdzie
@@ -80,6 +119,32 @@ l_{ij}&=\Bigl(a_{ij}-\textstyle\sum_{k<j}l_{ik}l_{jk}\Bigr)\Big/l_{jj}
 \quad(i>j).
 \end{align*}
 
+\begin{przyklad}[Przykład: Cholesky dla macierzy $3\times3$]
+\[
+A=\begin{bmatrix}4&2&-2\\2&10&2\\-2&2&6\end{bmatrix}.
+\]
+Kolumna po kolumnie:
+\begin{align*}
+&l_{11}=\sqrt4=2,\ l_{21}=\tfrac22=1,\ l_{31}=\tfrac{-2}2=-1,\\
+&l_{22}=\sqrt{10-1^2}=3,\ l_{32}=\tfrac{2-(-1)\cdot1}3=1,\\
+&l_{33}=\sqrt{6-1-1}=2.
+\end{align*}
+Zatem
+\[
+L=\begin{bmatrix}2&0&0\\1&3&0\\-1&1&2\end{bmatrix}.
+\]
+Sprawdzenie, np.\ wyraz $(3,3)$ iloczynu $LL^T$: $1+1+4=6$. Tę samą
+macierz rozkładamy bez pierwiastków w~zadaniu~3.
+\end{przyklad}
+
+\begin{poludzku}
+Cholesky to „pierwiastek z~macierzy”: tak jak $9=3\cdot3$, tak
+$A=L\cdot L^T$. Działa tylko dla macierzy „dodatnich” (dodatnio
+określonych), tak jak zwykły pierwiastek tylko dla liczb dodatnich.
+Liczymy go kolumna po kolumnie: na przekątnej wyciągamy pierwiastek
+z~tego, co zostało, a~pod przekątną dzielimy przez ten pierwiastek.
+\end{poludzku}
+
 \begin{intuicja}
 Dodatnio określona macierz to „porządna” macierz symetryczna: nie
 zniekształca przestrzeni w~żadnym kierunku „na drugą stronę”. Dla niej
@@ -101,6 +166,26 @@ a~\emph{ortonormalne}, gdy dodatkowo $\norm{v_i}=1$. Wtedy w~bazie
 ortonormalnej $x=\sum_ix_iv_i$, gdzie $x_i=\langle x,v_i\rangle$.
 \end{definicja}
 
+\begin{przyklad}[Przykład: współrzędne w~bazie ortonormalnej]
+$(1,2)$ i~$(2,-1)$ są ortogonalne: $1\cdot2+2\cdot(-1)=0$. Po podzieleniu
+przez długość $\sqrt5$ dostajemy bazę ortonormalną
+$v_1=\tfrac1{\sqrt5}(1,2)$, $v_2=\tfrac1{\sqrt5}(2,-1)$. Dla $x=(3,1)$:
+\[
+\langle x,v_1\rangle=\tfrac{3+2}{\sqrt5}=\sqrt5,\qquad
+\langle x,v_2\rangle=\tfrac{6-1}{\sqrt5}=\sqrt5,
+\]
+i~rzeczywiście $\sqrt5\,v_1+\sqrt5\,v_2=(1,2)+(2,-1)=(3,1)$. Żadnego
+układu równań --- same iloczyny skalarne.
+\end{przyklad}
+
+\begin{poludzku}
+Iloczyn skalarny mierzy, „jak bardzo dwa wektory patrzą w~tę samą
+stronę”. Zero znaczy: pod kątem prostym. Baza ortonormalna to jak osie
+$x$ i~$y$ na kartce w~kratkę, tylko może obrócone: wzajemnie prostopadłe
+i~długości $1$. W~takiej bazie współrzędną wektora dostajemy jednym
+iloczynem skalarnym (rzut na oś).
+\end{poludzku}
+
 \begin{definicja}[Macierz ortogonalna]
 $Q$ jest \emph{ortogonalna}, gdy $Q^TQ=I$, czyli kolumny $Q$ są
 ortonormalne. Dla kwadratowej $Q$: $Q^{-1}=Q^T$, iloczyn ortogonalnych
@@ -109,11 +194,47 @@ jest ortogonalny, a~$Q$ zachowuje iloczyn skalarny
 \emph{izometrią}.
 \end{definicja}
 
+\begin{przyklad}
+\begin{itemize}
+\item $Q=\left[\begin{smallmatrix}0{,}6&-0{,}8\\0{,}8&0{,}6\end{smallmatrix}
+\right]$: kolumny mają długość $\sqrt{0{,}36+0{,}64}=1$ i~iloczyn
+skalarny $-0{,}48+0{,}48=0$, więc $Q$ jest ortogonalna (obrót o~kąt
+$\approx53^\circ$). Np.\ $Q(5,0)=(3,4)$ --- długość dalej $5$.
+\item Permutacja
+$\left[\begin{smallmatrix}0&1\\1&0\end{smallmatrix}\right]$ (zamiana
+współrzędnych) też jest ortogonalna.
+\item $\left[\begin{smallmatrix}1&1\\0&1\end{smallmatrix}\right]$ nie
+jest: $(0,1)\mapsto(1,1)$, długość z~$1$ urosła do $\sqrt2$.
+\end{itemize}
+\end{przyklad}
+
+\begin{poludzku}
+Macierz ortogonalna obraca albo odbija, ale niczego nie rozciąga ani nie
+ściska. Odwrócić ją jest za darmo: wystarczy transpozycja.
+\end{poludzku}
+
 \begin{definicja}[Odbicie Householdera]
 Dla $\norm v=1$ macierz $H=I-2vv^T$ to odbicie względem hiperpłaszczyzny
 prostopadłej do $v$: $Hy=y-2v\langle v,y\rangle$. Dla $x$ biorąc
 $u=\norm xe_1-x$, $v=u/\norm u$ dostajemy $Hx=\norm xe_1$.
 \end{definicja}
+
+\begin{przyklad}[Przykład: Householder dla $(3,4)$]
+$\norm x=5$, $u=(5,0)-(3,4)=(2,-4)$, $\norm u^2=20$. Wtedy
+\[
+H=I-\frac{2uu^T}{\norm u^2}
+=I-\frac1{10}\begin{bmatrix}4&-8\\-8&16\end{bmatrix}
+=\begin{bmatrix}0{,}6&0{,}8\\0{,}8&-0{,}6\end{bmatrix}
+\]
+i~$H(3,4)=(1{,}8+3{,}2,\ 2{,}4-2{,}4)=(5,0)$.
+\end{przyklad}
+
+\begin{poludzku}
+Householder to lustro. Chcemy, żeby wektor $x$ położył się na osi $e_1$.
+Stawiamy lustro dokładnie „w~połowie drogi” między $x$ a~$\norm xe_1$,
+i~odbicie przenosi jeden na drugi. Jednym lustrem zerujemy od razu
+\emph{wszystkie} współrzędne poza pierwszą.
+\end{poludzku}
 
 \begin{definicja}[Obrót Givensa]
 $G_{i,j}(\theta)$ to macierz identyczności, w~której wyrazy na pozycjach
@@ -122,6 +243,23 @@ $\left[\begin{smallmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta
 \end{smallmatrix}\right]$. Działa jak obrót o~kąt $\theta$ w~płaszczyźnie
 współrzędnych $i,j$, a~pozostałych nie rusza.
 \end{definicja}
+
+\begin{przyklad}[Przykład: Givens dla $(3,4)$]
+Biorąc $\cos\theta=\tfrac35$, $\sin\theta=-\tfrac45$:
+\[
+\begin{bmatrix}0{,}6&0{,}8\\-0{,}8&0{,}6\end{bmatrix}
+\begin{bmatrix}3\\4\end{bmatrix}=\begin{bmatrix}5\\0\end{bmatrix}.
+\]
+W~$\R^3$ macierz $G_{1,3}(\theta)$ robi to samo ze współrzędnymi
+$1$ i~$3$, np.\ $(3,7,4)\mapsto(5,7,0)$.
+\end{przyklad}
+
+\begin{poludzku}
+Givens to obrót, który rusza tylko dwie współrzędne naraz. Obracamy tak
+długo, aż jedna z~nich spadnie do zera. Zeruje jedną liczbę na raz,
+więc jest „precyzyjniejszy” niż Householder i~opłaca się, gdy zer do
+zrobienia jest niewiele.
+\end{poludzku}
 
 \begin{intuicja}
 Macierze ortogonalne to „sztywne ruchy” (obroty i~odbicia): nie zmieniają
@@ -524,6 +662,13 @@ Dla $k\ne0$: $\int_{-\pi}^{\pi}\cos kx\,dx=\bigl[\frac{\sin kx}k\bigr]_{-\pi}^{\
 $1$. Funkcja $\sin kx$ jest nieparzysta, a~przedział symetryczny.
 \end{proof}
 \end{teoria}
+
+\begin{przyklad}
+$\cos x\cos2x=\tfrac12(\cos x+\cos3x)$, a~oba składniki mają na
+$[-\pi,\pi]$ całkę zero, więc $\langle\cos x,\cos2x\rangle=0$.
+Natomiast $\cos^2x=\tfrac12(1+\cos2x)$ ma całkę $\tfrac12\cdot2\pi=\pi$,
+więc $\norm{\cos x}^2=\tfrac1\pi\cdot\pi=1$.
+\end{przyklad}
 
 \begin{intuicja}
 Funkcje na przedziale to „wektory z~nieskończenie wieloma

@@ -26,7 +26,12 @@ we wcześniejszych zestawach.
    - nieoczywiste definicje/twierdzenia w `teoria` (z `definicja`, `twierdzenie`,
      `lemat`, `fakt`), wytłumaczone, nie tylko przytoczone; jeśli coś było już
      wyjaśnione we wcześniejszym zestawie, można się odwołać;
-   - `intuicja` (po ludzku, jak do studenta), potem `\formalnie` (pełny dowód),
+   - w teorii (sekcje `Teoria: ...` i pudełka `teoria` w zadaniach) po
+     każdej ważniejszej definicji/twierdzeniu: pudełko `przyklad`
+     (konkretne małe liczby, przykład + kontrprzykład, sprawdzone
+     w `weryfikacja/`) i `poludzku` (to samo najprościej, bez wzorów,
+     z analogią) — wersja formalna zostaje bez zmian;
+   - `intuicja` (jak do studenta), potem `\formalnie` (pełny dowód),
      na końcu `odpowiedz`;
    - matematyka w tytułach sekcji przez `\texorpdfstring`;
    - zestaw trafia też automatycznie do pliku zbiorczego `wszystko.pdf`
