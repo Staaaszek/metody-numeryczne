@@ -1,0 +1,592 @@
+\documentclass[11pt]{article}
+\usepackage{mn}
+
+\begin{document}
+\zestaw{3}{Macierze dodatnio określone, ortogonalność}
+
+\begin{teoria}[Jak czytać ten dokument]
+Każde zadanie ma: przepisaną \textbf{treść} (szare pudełko), potrzebną
+\textbf{teorię} (niebieskie), \textbf{intuicję} (żółte), \textbf{rozwiązanie
+formalne} i~\textbf{odpowiedź} (zielone). Wyniki zostały sprawdzone
+skryptem \texttt{weryfikacja/mn03.py} (algebra liniowa dokładnie na
+ułamkach, pierwiastki i~całki numerycznie). Wektory są kolumnowe,
+$x^Ty=\langle x,y\rangle=\sum_ix_iy_i$, $\norm x=\sqrt{x^Tx}$, $e_i$ to
+$i$-ty wektor bazy standardowej.
+\end{teoria}
+
+% =====================================================================
+\section{Teoria: macierze dodatnio określone}
+
+\begin{definicja}[Macierz dodatnio określona]
+Macierz $C\in\R^{n\times n}$ jest \emph{dodatnio określona}, jeśli
+$x^TCx>0$ dla każdego $x\ne0$, a~\emph{dodatnio półokreślona}, jeśli
+$x^TCx\ge0$ dla każdego $x$.
+\end{definicja}
+
+Wyrażenie $x^TCx=\sum_{i,j}c_{ij}x_ix_j$ to \emph{forma kwadratowa} ---
+wielomian stopnia $2$ od współrzędnych $x$. Dodatnia określoność mówi, że
+ta „miska” ma jedyne minimum $0$ w~punkcie $x=0$. Zwykle (tak jak na
+wykładzie) interesują nas macierze \emph{symetryczne} dodatnio określone.
+
+\begin{fakt}\label{fakt:proste}
+Niech $C$ będzie dodatnio określona. Wtedy:
+\begin{enumerate}
+\item $c_{ii}=e_i^TCe_i>0$ --- wyrazy na przekątnej są dodatnie;
+\item $C$ jest nieosobliwa: gdyby $Cx=0$ dla $x\ne0$, to $x^TCx=0$;
+\item (\emph{kongruencja}) jeśli $M$ jest nieosobliwa, to $M^TCM$ też jest
+dodatnio określona, bo
+$x^T(M^TCM)x=(Mx)^TC(Mx)>0$, gdyż $Mx\ne0$ dla $x\ne0$.
+\end{enumerate}
+\end{fakt}
+
+\begin{fakt}[z~wykładu]
+Dla każdej $A$ macierz $A^TA$ jest dodatnio półokreślona, bo
+$x^TA^TAx=\norm{Ax}^2\ge0$. Jeśli kolumny $A$ są liniowo niezależne, to
+$Ax\ne0$ dla $x\ne0$, więc $A^TA$ jest dodatnio określona.
+\end{fakt}
+
+\begin{twierdzenie}[Rozkład Cholesky'ego]\label{tw:chol}
+Każda symetryczna dodatnio określona $A$ ma rozkład $A=LL^T$, gdzie
+$L$ jest dolnotrójkątna z~\emph{dodatnimi} wyrazami na przekątnej.
+\end{twierdzenie}
+
+\begin{proof}[Szkic (jak na wykładzie)]
+Z~faktu~\ref{fakt:proste} $a_{11}>0$. Zapiszmy blokowo
+$A=\left[\begin{smallmatrix}a_{11}&a^T\\a&B\end{smallmatrix}\right]$.
+Niech $E$ będzie dolnotrójkątna i~robi „Gaussa na pierwszej kolumnie”:
+dzieli wiersz $1$ przez $\sqrt{a_{11}}$ i~zeruje kolumnę pod nim. Wtedy
+$EA$ ma pierwszą kolumnę $(\sqrt{a_{11}},0,\ldots,0)^T$, a~mnożąc jeszcze
+z~prawej przez $E^T$ (to samo na kolumnach), dostajemy
+\[
+EAE^T=\begin{bmatrix}1&0\\0&A'\end{bmatrix},\qquad
+A'=B-\tfrac{1}{a_{11}}aa^T.
+\]
+Z~faktu~\ref{fakt:proste}(3) $EAE^T$ jest dodatnio określona, więc $A'$
+też (bierzemy $x$ z~zerem na pierwszej współrzędnej) --- i~jest
+symetryczna. Powtarzamy dla $A'$ i~po $n$ krokach
+\[
+E_n\cdots E_1\,A\,E_1^T\cdots E_n^T=I,
+\]
+czyli $A=LL^T$ dla
+$L=(E_n\cdots E_1)^{-1}$, która jest dolnotrójkątna (zestaw~2, zad.~3).
+Przekątna $L$ to kolejne $\sqrt{\text{pivotów}}>0$.
+\end{proof}
+
+W~praktyce $L$ liczy się „dynamicznie”, kolumna po kolumnie. Z~$a_{ij}=
+\sum_{k\le j}l_{ik}l_{jk}$ (dla $j\le i$) dostajemy
+\begin{align*}
+l_{jj}&=\sqrt{a_{jj}-\textstyle\sum_{k<j}l_{jk}^2},\\
+l_{ij}&=\Bigl(a_{ij}-\textstyle\sum_{k<j}l_{ik}l_{jk}\Bigr)\Big/l_{jj}
+\quad(i>j).
+\end{align*}
+
+\begin{intuicja}
+Dodatnio określona macierz to „porządna” macierz symetryczna: nie
+zniekształca przestrzeni w~żadnym kierunku „na drugą stronę”. Dla niej
+eliminację Gaussa można robić \emph{symetrycznie} --- jednocześnie na
+wierszach i~kolumnach --- i~wtedy $U=L^T$. Pivoty są automatycznie dodatnie,
+więc nie trzeba żadnego pivotingu. To jest dwa razy tańsze niż LU i~stabilne.
+\end{intuicja}
+
+% =====================================================================
+\section{Teoria: ortogonalność}
+
+\begin{definicja}[Iloczyn skalarny, układ ortonormalny]
+\emph{Iloczyn skalarny} na przestrzeni liniowej to funkcja
+$\langle\cdot,\cdot\rangle$, która jest dwuliniowa, symetryczna
+i~\emph{dodatnio określona}: $\langle x,x\rangle>0$ dla $x\ne0$.
+Norma: $\norm x=\sqrt{\langle x,x\rangle}$. Wektory $v_1,\ldots,v_n$ są
+\emph{ortogonalne}, gdy $\langle v_i,v_j\rangle=0$ dla $i\ne j$,
+a~\emph{ortonormalne}, gdy dodatkowo $\norm{v_i}=1$. Wtedy w~bazie
+ortonormalnej $x=\sum_ix_iv_i$, gdzie $x_i=\langle x,v_i\rangle$.
+\end{definicja}
+
+\begin{definicja}[Macierz ortogonalna]
+$Q$ jest \emph{ortogonalna}, gdy $Q^TQ=I$, czyli kolumny $Q$ są
+ortonormalne. Dla kwadratowej $Q$: $Q^{-1}=Q^T$, iloczyn ortogonalnych
+jest ortogonalny, a~$Q$ zachowuje iloczyn skalarny
+($(Qx)^T(Qy)=x^TQ^TQy=x^Ty$), więc długości i~kąty --- jest
+\emph{izometrią}.
+\end{definicja}
+
+\begin{definicja}[Odbicie Householdera]
+Dla $\norm v=1$ macierz $H=I-2vv^T$ to odbicie względem hiperpłaszczyzny
+prostopadłej do $v$: $Hy=y-2v\langle v,y\rangle$. Dla $x$ biorąc
+$u=\norm xe_1-x$, $v=u/\norm u$ dostajemy $Hx=\norm xe_1$.
+\end{definicja}
+
+\begin{definicja}[Obrót Givensa]
+$G_{i,j}(\theta)$ to macierz identyczności, w~której wyrazy na pozycjach
+$(i,i),(i,j),(j,i),(j,j)$ zastąpiono przez
+$\left[\begin{smallmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta
+\end{smallmatrix}\right]$. Działa jak obrót o~kąt $\theta$ w~płaszczyźnie
+współrzędnych $i,j$, a~pozostałych nie rusza.
+\end{definicja}
+
+\begin{intuicja}
+Macierze ortogonalne to „sztywne ruchy” (obroty i~odbicia): nie zmieniają
+długości, więc nie wzmacniają błędów. Dlatego rozkład $A=QR$ liczony
+odbiciami Householdera lub obrotami Givensa jest numerycznie lepszy niż
+np.\ rozwiązywanie $A^TAx=A^Tb$ (gdzie $\mathrm{cond}(A^TA)=
+\mathrm{cond}(A)^2$).
+\end{intuicja}
+
+% =====================================================================
+\section{Zadanie 1. Potęgi macierzy dodatnio określonej}
+\begin{tresc}
+Niech $A$ będzie macierzą kwadratową, symetryczną i~nieosobliwą. Pokaż,
+że jeśli $A$ jest dodatnio określona, to $A^k$ również, dla każdego
+$k\ge2$. Rozstrzygnij, dla jakich $k$ zachodzi twierdzenie odwrotne.
+\end{tresc}
+
+\begin{intuicja}
+„Rozdzielamy” potęgę na dwie równe połowy, które są transpozycjami
+siebie nawzajem (bo $A$ jest symetryczna):
+\begin{itemize}
+\item $k=2m$: $x^TA^{2m}x=\norm{A^mx}^2$ --- kwadrat długości,
+więc $>0$. Tu nawet nie trzeba, żeby $A$ była dodatnio określona!
+\item $k=2m+1$: $x^TA^{2m+1}x=(A^mx)^T\,A\,(A^mx)$ --- to forma kwadratowa
+$A$ w~punkcie $y=A^mx$, więc $>0$.
+\end{itemize}
+Właśnie dlatego odwrotne twierdzenie działa tylko dla nieparzystych $k$:
+dla parzystych $A^k$ jest dodatnio określona \emph{zawsze}, np.\ dla $A=-I$.
+\end{intuicja}
+
+\formalnie
+Zauważmy najpierw, że $A^m$ jest
+\begin{itemize}
+\item symetryczna: $(A^m)^T=(A^T)^m=A^m$ (więc $A^k$ też),
+\item nieosobliwa: $\det A^m=(\det A)^m\ne0$.
+\end{itemize} Niech $x\ne0$ i~$y=A^mx$; wtedy
+$y\ne0$.
+
+\emph{$k=2m$ parzyste.}
+\[
+x^TA^{2m}x=x^T(A^m)^TA^mx=y^Ty=\norm y^2>0.
+\]
+\emph{$k=2m+1$ nieparzyste.}
+\[
+x^TA^{2m+1}x=x^T(A^m)^T\,A\,A^mx=y^TAy>0,
+\]
+bo $A$ jest dodatnio określona i~$y\ne0$. (To jest fakt~\ref{fakt:proste}(3)
+z~$M=A^m$.) Zatem $A^k$ jest dodatnio określona dla każdego $k\ge1$.
+
+\emph{Twierdzenie odwrotne:} „jeśli $A^k$ jest dodatnio określona, to $A$
+też” (dla symetrycznej nieosobliwej $A$).
+
+\emph{$k$ parzyste --- nie zachodzi.} Dla $A=-I$ (symetryczna, nieosobliwa)
+$A^k=I$ jest dodatnio określona, a~$x^TAx=-\norm x^2<0$. Ogólniej, z~dowodu
+wyżej: dla parzystego $k$ \emph{każda} symetryczna nieosobliwa $A$ ma
+$A^k$ dodatnio określoną, więc $A^k$ nic nie mówi o~$A$.
+
+\emph{$k=2m+1$ nieparzyste --- zachodzi.} Niech $A^k$ będzie dodatnio
+określona i~$y\ne0$. Ponieważ $A^m$ jest nieosobliwa, istnieje $x$
+z~$A^mx=y$, przy czym $x\ne0$. Wtedy z~rachunku wyżej
+\[
+y^TAy=x^TA^{2m+1}x=x^TA^kx>0.
+\]
+Zatem $A$ jest dodatnio określona. (Tu nieosobliwość jest istotna: to
+dzięki niej $y=A^mx$ przebiega \emph{wszystkie} niezerowe wektory.)
+
+\begin{uwaga}[Uzupełnienie: wartości własne]
+Symetryczna $A$ jest dodatnio określona $\iff$ jej wszystkie wartości
+własne są dodatnie, a~$A^k$ ma wartości własne $\lambda^k$. Dla
+nieparzystego $k$: $\lambda^k>0\iff\lambda>0$; dla parzystego $\lambda^k>0$
+dla każdego $\lambda\ne0$. To ten sam wynik, ale na wykładzie wartości
+własnych jeszcze nie było.
+\end{uwaga}
+
+\begin{odpowiedz}
+$x^TA^{2m}x=\norm{A^mx}^2>0$ oraz $x^TA^{2m+1}x=(A^mx)^TA(A^mx)>0$ dla
+$x\ne0$. Twierdzenie odwrotne zachodzi \textbf{dokładnie dla nieparzystych}
+$k$ (bo $A^m$ jest bijekcją); dla parzystych nie --- kontrprzykład $A=-I$.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 2. Kryterium dla \texorpdfstring{$2\times2$}{2x2}}
+\begin{tresc}
+Pokaż, że symetryczna macierz $A\in\R^{2\times2}$, dla której $\det A>0$
+oraz $A[0,0]>0$, jest dodatnio określona. \emph{(Tak, to szczególny
+przypadek kryterium Sylvestera. Nie możesz z~niego korzystać przy
+rozwiązaniu tego zadania. Nie korzystaj również z~twierdzeń o~wartościach
+własnych.)}
+\end{tresc}
+
+\begin{intuicja}
+Forma kwadratowa $ax_1^2+2bx_1x_2+cx_2^2$ to trójmian kwadratowy.
+Jak w~szkole: \emph{dopełniamy do kwadratu} względem $x_1$. Wychodzi suma
+dwóch kwadratów ze współczynnikami $a$ i~$\det A/a$ --- oba dodatnie, więc
+suma jest dodatnia, chyba że oba kwadraty są zerami, a~to wymusza $x=0$.
+(To dokładnie rozkład $A=LDL^T$ z~zadania~3 dla $n=2$.)
+\end{intuicja}
+
+\formalnie
+Niech $A=\left[\begin{smallmatrix}a&b\\b&c\end{smallmatrix}\right]$,
+gdzie $a=A[0,0]>0$ i~$\det A=ac-b^2>0$. Dla $x=(x_1,x_2)^T$:
+\begin{align*}
+x^TAx&=ax_1^2+2bx_1x_2+cx_2^2\\
+&=a\Bigl(x_1^2+2\tfrac ba x_1x_2+\tfrac{b^2}{a^2}x_2^2\Bigr)
++\Bigl(c-\tfrac{b^2}a\Bigr)x_2^2\\
+&=a\Bigl(x_1+\tfrac bax_2\Bigr)^2+\frac{\det A}{a}\,x_2^2.
+\end{align*}
+Oba współczynniki $a$ i~$\det A/a$ są dodatnie, więc $x^TAx\ge0$.
+Równość wymaga, by oba kwadraty były zerami: $x_2=0$, a~potem
+$x_1=x_1+\tfrac bax_2=0$. Zatem $x^TAx>0$ dla $x\ne0$.
+
+\begin{uwaga}
+Oba założenia są potrzebne: $-I$ ma $\det=1>0$, ale $a<0$;
+$\left[\begin{smallmatrix}1&2\\2&1\end{smallmatrix}\right]$ ma $a>0$,
+ale $\det=-3$, i~dla $x=(1,-1)$ daje $x^TAx=-2$. Warunek „$a>0$”
+można zastąpić „$c>0$” (bo $\det A>0$ wymusza $ac>b^2\ge0$, więc
+$a$ i~$c$ mają ten sam znak).
+\end{uwaga}
+
+\begin{odpowiedz}
+$x^TAx=a\bigl(x_1+\frac bax_2\bigr)^2+\frac{\det A}{a}x_2^2$ --- suma
+kwadratów z~dodatnimi współczynnikami, równa $0$ tylko dla $x=0$.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 3. Rozkład \texorpdfstring{$LDL^T$}{LDLᵀ} bez pierwiastków}
+\begin{tresc}
+Dana jest macierz symetryczna i~dodatnio określona $A$. Podać algorytm
+działający w~czasie $\O(n^3)$, który znajduje rozkład $A=LDL^T$ taki,
+że $L$ jest dolnotrójkątna, a~$D$ jest macierzą diagonalną (ma niezerowe
+wyrazy tylko na przekątnej) --- \emph{prawie} rozkład Cholesky'ego, ale
+nie do końca.
+
+Algorytm może używać tylko prostych operacji arytmetycznych,
+\textbf{nie może używać pierwiastka kwadratowego}.
+\end{tresc}
+
+\begin{intuicja}
+Pierwiastek w~Choleskym bierze się stąd, że chcemy rozłożyć
+„wielkość” pivota \emph{po równo} między $L$ i~$L^T$:
+$\sqrt{d}\cdot\sqrt{d}$. Jeśli zamiast tego zostawimy $d$ osobno ---
+w~środkowej macierzy $D$ --- a~$L$ będzie mieć jedynki na przekątnej, to
+pierwiastki znikają. Wzory wyprowadzamy dokładnie tak jak „dynamiczny”
+Cholesky z~wykładu: porównujemy wyrazy $A$ i~$LDL^T$, kolumna po kolumnie.
+\end{intuicja}
+
+\formalnie
+Szukamy $L$ \emph{jednostkowej} dolnotrójkątnej ($l_{jj}=1$) i~$D=
+\mathrm{diag}(d_1,\ldots,d_n)$. Wyraz $(i,j)$ iloczynu, dla $j\le i$:
+\[
+(LDL^T)_{ij}=\sum_{k}l_{ik}d_kl_{jk}=\sum_{k\le j}l_{ik}d_kl_{jk}
+\]
+(bo $l_{jk}=0$ dla $k>j$). Wydzielając składnik $k=j$ (gdzie $l_{jj}=1$)
+i~przyrównując do $a_{ij}$:
+\begin{align}
+d_j&=a_{jj}-\sum_{k<j}l_{jk}^2d_k,\tag{D}\\
+l_{ij}&=\frac1{d_j}\Bigl(a_{ij}-\sum_{k<j}l_{ik}d_kl_{jk}\Bigr),
+\quad i>j.\tag{L}
+\end{align}
+Prawe strony zależą tylko od kolumn $k<j$, więc liczymy kolumnami.
+
+\emph{Algorytm.}
+\begin{algorithmic}[1]
+\For{$j=1,\ldots,n$}
+  \For{$k=1,\ldots,j-1$}
+    \State $w_k\gets l_{jk}d_k$
+  \EndFor
+  \State $d_j\gets a_{jj}-\sum_{k<j}l_{jk}w_k$
+  \State $l_{jj}\gets1$
+  \For{$i=j+1,\ldots,n$}
+    \State $l_{ij}\gets\bigl(a_{ij}-\sum_{k<j}l_{ik}w_k\bigr)/d_j$
+  \EndFor
+\EndFor
+\State \Return $L,\ D=\mathrm{diag}(d_1,\ldots,d_n)$
+\end{algorithmic}
+Używamy tylko $+,-,\cdot,/$ --- żadnego pierwiastka.
+
+\emph{Poprawność (czyli: nigdy nie dzielimy przez $0$).} Z~tw.~\ref{tw:chol}
+$A=GG^T$, gdzie $G$ dolnotrójkątna z~$g_{jj}>0$. Niech $S$ będzie diagonalna
+z~$s_{jj}=g_{jj}$, $L^*=GS^{-1}$ (kolumna $j$ macierzy $G$ podzielona
+przez $g_{jj}$ --- jednostkowa dolnotrójkątna), $D^*=S^2$. Wtedy
+\[
+L^*D^*L^{*T}=GS^{-1}S^2S^{-1}G^T=GG^T=A,
+\qquad d^*_j=g_{jj}^2>0.
+\]
+Indukcją po $j$ pokażemy, że algorytm oblicza właśnie $L^*,D^*$. Jeśli
+kolumny $1,\ldots,j-1$ są już równe tym z~$L^*,D^*$, to ponieważ $L^*,D^*$
+spełniają~\textup{(D)} (bo $L^*D^*L^{*T}=A$), algorytm dostaje
+$d_j=d^*_j>0$, a~następnie z~\textup{(L)} $l_{ij}=l^*_{ij}$. W~szczególności
+każde $d_j>0$, więc dzielenie w~\textup{(L)} jest poprawne, a~wynik spełnia
+$A=LDL^T$.
+
+\emph{Złożoność.} Dla kolumny $j$: $j-1$ mnożeń na $w$, $O(j)$ na $d_j$
+i~$O(j)$ dla każdego z~$n-j$ wyrazów $l_{ij}$. Razem
+\[
+\sum_{j=1}^n O\bigl((n-j+1)\,j\bigr)\le\sum_{j=1}^nO(n^2)=\O(n^3).
+\]
+(Dokładniej $\approx n^3/6$ mnożeń --- tyle co Cholesky, połowa LU.)
+
+\emph{Przykład.} Dla
+$A=\left[\begin{smallmatrix}4&2&-2\\2&10&2\\-2&2&6\end{smallmatrix}\right]$:
+$d_1=4$, $l_{21}=\tfrac12$, $l_{31}=-\tfrac12$; $d_2=10-\tfrac14\cdot4=9$,
+$l_{32}=\bigl(2-(-\tfrac12)\cdot4\cdot\tfrac12\bigr)/9=\tfrac13$;
+$d_3=6-\tfrac14\cdot4-\tfrac19\cdot9=4$. Zatem
+\[
+L=\begin{bmatrix}1&0&0\\\frac12&1&0\\-\frac12&\frac13&1\end{bmatrix},
+\quad D=\begin{bmatrix}4&&\\&9&\\&&4\end{bmatrix}.
+\]
+
+\begin{uwaga}
+\begin{itemize}
+\item Ten sam rozkład daje zwykła eliminacja Gaussa bez pivotingu: $A=LU$
+(Doolittle), a~dla symetrycznej $A$ jest $U=DL^T$ --- $d_j$ to pivoty.
+Z~jednoznaczności rozkładu (zestaw~2, zad.~4) wynika, że to te same $L$
+i~$d_j$. Algorytm wyżej po prostu nie liczy niepotrzebnie połowy $U$.
+\item Algorytm działa dla każdej symetrycznej $A$ o~niezerowych pivotach
+(np.\ nieokreślonej), Cholesky --- tylko dla dodatnio określonych.
+Znak $d_j$ pokazuje, czy $A$ jest dodatnio określona: tak $\iff$ wszystkie
+$d_j>0$ (bo $x^TAx=\sum_jd_j(L^Tx)_j^2$).
+\item Układ $Ax=b$ rozwiązujemy przez $Ly=b$, $z_j=y_j/d_j$, $L^Tx=z$.
+\end{itemize}
+\end{uwaga}
+
+\begin{odpowiedz}
+Kolumnami $j=1,\ldots,n$:
+$d_j=a_{jj}-\sum_{k<j}l_{jk}^2d_k$, a~dla $i>j$:
+$l_{ij}=\bigl(a_{ij}-\sum_{k<j}l_{ik}d_kl_{jk}\bigr)/d_j$, $l_{jj}=1$.
+Czas $\O(n^3)$, bez pierwiastków; $d_j=g_{jj}^2>0$ (gdzie $A=GG^T$ to
+Cholesky), więc dzielenie jest zawsze wykonalne.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 4. Odbicie Householdera to inwolucja}
+\begin{tresc}
+Pokaż, że macierz odbicia Householdera $I-2vv^T$ jest inwolucją (tzn.\
+jej kwadrat jest identycznością).
+\end{tresc}
+
+\begin{intuicja}
+$H$ odbija przestrzeń w~„lustrze” prostopadłym do $v$: wektor $v$
+przechodzi na $-v$, a~wektory prostopadłe do $v$ zostają na miejscu.
+Dwa odbicia w~tym samym lustrze wracają wszystko na miejsce. Rachunkowo
+kluczowe jest $v^Tv=1$ (w~definicji Householdera $v=u/\norm u$).
+\end{intuicja}
+
+\formalnie
+Niech $H=I-2vv^T$, $\norm v=1$, czyli $v^Tv=1$. Z~łączności mnożenia
+macierzy $vv^Tvv^T=v(v^Tv)v^T=vv^T$, więc
+\begin{align*}
+H^2&=(I-2vv^T)(I-2vv^T)\\
+&=I-2vv^T-2vv^T+4\,v(v^Tv)v^T\\
+&=I-4vv^T+4vv^T=I.
+\end{align*}
+
+\begin{uwaga}
+\begin{itemize}
+\item $H$ jest symetryczna: $(vv^T)^T=vv^T$. Zatem $H^TH=H^2=I$ ---
+$H$ jest \emph{ortogonalna}, a~$H^{-1}=H^T=H$.
+\item Założenie $\norm v=1$ jest istotne: ten sam rachunek daje
+$H^2=I+4(v^Tv-1)vv^T$, co dla $v\ne0$ jest $I$ tylko przy $v^Tv=1$.
+Dla dowolnego $v\ne0$ odbicie zapisuje się jako
+$I-2\frac{vv^T}{v^Tv}$.
+\item Geometrycznie: $Hv=v-2v(v^Tv)=-v$, a~dla $w\perp v$:
+$Hw=w-2v(v^Tw)=w$.
+\end{itemize}
+\end{uwaga}
+
+\begin{odpowiedz}
+$H^2=I-4vv^T+4v(v^Tv)v^T=I$, bo $v^Tv=1$. Odbicie Householdera jest
+swoją własną odwrotnością (i~jest symetryczne i~ortogonalne).
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 5. Dwa obroty Givensa}
+\begin{tresc}
+Znajdź dwie macierze obrotów Givensa $G_1$ i~$G_2$ takie, że
+\[
+G_1\cdot G_2\cdot\begin{bmatrix}2\\1\\2\end{bmatrix}
+=\begin{bmatrix}3\\0\\0\end{bmatrix}.
+\]
+Macierz obrotu Givensa to macierz postaci (wiersze i~kolumny $i$ oraz $j$):
+\[
+\begin{bmatrix}
+I&&&&\\
+&\cos\theta&&-\sin\theta&\\
+&&I&&\\
+&\sin\theta&&\cos\theta&\\
+&&&&I
+\end{bmatrix}
+\]
+dla pewnych dwóch indeksów $i,j$ oraz pewnego $\theta\in\R$. Wszystkie
+pozostałe wyrazy są równe $0$.
+\end{tresc}
+
+\begin{teoria}[Jak wyzerować współrzędną obrotem]
+\begin{lemat}\label{lem:givens}
+Niech $(a,b)\ne(0,0)$, $r=\sqrt{a^2+b^2}$, $\cos\theta=a/r$,
+$\sin\theta=-b/r$. Wtedy
+\[
+\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}
+\begin{bmatrix}a\\b\end{bmatrix}=\begin{bmatrix}r\\0\end{bmatrix}.
+\]
+\end{lemat}
+\begin{proof}
+Pierwsza współrzędna: $\frac{a\cdot a+b\cdot b}{r}=r$, druga:
+$\frac{-ab+ab}{r}=0$. Takie $\theta$ istnieje, bo
+$(a/r)^2+(b/r)^2=1$.
+\end{proof}
+\end{teoria}
+
+\begin{intuicja}
+Obroty nie zmieniają długości, a~$\norm{(2,1,2)}=\sqrt{4+1+4}=3$ ---
+dlatego w~ogóle da się trafić w~$(3,0,0)$. Najpierw ($G_2$, bo działa
+pierwszy!) obracamy w~płaszczyźnie współrzędnych $1,3$, żeby wyzerować
+trzecią: $(2,\cdot,2)\to(2\sqrt2,\cdot,0)$. Potem ($G_1$) w~płaszczyźnie
+$1,2$ zerujemy drugą: $(2\sqrt2,1)\to(3,0)$.
+\end{intuicja}
+
+\formalnie
+\emph{Krok 1: $G_2=G_{1,3}(\theta_2)$.} Dla $(a,b)=(x_1,x_3)=(2,2)$:
+$r=2\sqrt2$, $\cos\theta_2=\frac1{\sqrt2}$, $\sin\theta_2=-\frac1{\sqrt2}$
+($\theta_2=-\frac\pi4$). Wtedy
+\[
+G_2=\begin{bmatrix}\frac1{\sqrt2}&0&\frac1{\sqrt2}\\[2pt]0&1&0\\[2pt]
+-\frac1{\sqrt2}&0&\frac1{\sqrt2}\end{bmatrix},\quad
+G_2\begin{bmatrix}2\\1\\2\end{bmatrix}=\begin{bmatrix}2\sqrt2\\1\\0\end{bmatrix},
+\]
+bo $\frac2{\sqrt2}+\frac2{\sqrt2}=2\sqrt2$ i~$-\frac2{\sqrt2}+\frac2{\sqrt2}=0$.
+
+\emph{Krok 2: $G_1=G_{1,2}(\theta_1)$.} Dla $(a,b)=(2\sqrt2,1)$:
+$r=\sqrt{8+1}=3$, $\cos\theta_1=\frac{2\sqrt2}3$, $\sin\theta_1=-\frac13$
+($\theta_1=-\arcsin\frac13$). Wtedy
+\[
+G_1=\begin{bmatrix}\frac{2\sqrt2}3&\frac13&0\\[2pt]-\frac13&\frac{2\sqrt2}3&0
+\\[2pt]0&0&1\end{bmatrix},\quad
+G_1\begin{bmatrix}2\sqrt2\\1\\0\end{bmatrix}=\begin{bmatrix}3\\0\\0\end{bmatrix},
+\]
+bo $\frac{8}{3}+\frac13=3$ i~$-\frac{2\sqrt2}3+\frac{2\sqrt2}3=0$.
+
+Zatem $G_1G_2(2,1,2)^T=G_1(2\sqrt2,1,0)^T=(3,0,0)^T$.
+
+\begin{uwaga}
+Rozwiązanie nie jest jedyne. Np.\ najpierw $G_{1,2}$ zeruje drugą
+współrzędną: $(2,1,2)\to(\sqrt5,0,2)$, potem $G_{1,3}$:
+$(\sqrt5,2)\to(3,0)$. To właśnie robi algorytm QR metodą Givensa: każdy
+obrót zeruje jeden wyraz.
+\end{uwaga}
+
+\begin{odpowiedz}
+\[
+G_2=\begin{bmatrix}\frac1{\sqrt2}&0&\frac1{\sqrt2}\\[2pt]0&1&0\\[2pt]
+-\frac1{\sqrt2}&0&\frac1{\sqrt2}\end{bmatrix},\
+G_1=\begin{bmatrix}\frac{2\sqrt2}3&\frac13&0\\[2pt]-\frac13&\frac{2\sqrt2}3&0
+\\[2pt]0&0&1\end{bmatrix}
+\]
+($\theta_2=-\pi/4$ w~płaszczyźnie $(1,3)$, $\theta_1=-\arcsin\frac13$
+w~płaszczyźnie $(1,2)$); $G_2(2,1,2)^T=(2\sqrt2,1,0)^T$, a~potem
+$G_1$ daje $(3,0,0)^T$.
+\end{odpowiedz}
+
+% =====================================================================
+\section{Zadanie 6. Ortogonalność sinusów i~cosinusów}
+\begin{tresc}
+\emph{(Mała powtórka z~analizy matematycznej\ldots)}
+
+Rozważamy przestrzeń wszystkich funkcji ciągłych na przedziale
+$[-\pi,\pi]$. Na tych funkcjach zadajemy operację iloczynu skalarnego
+dwóch funkcji następująco:
+\[
+\langle f,g\rangle=\frac1\pi\int_{-\pi}^{\pi}fg.
+\]
+Pokazać, że funkcje
+\[
+\{1,\cos x,\cos2x,\cos3x,\ldots,\sin x,\sin2x,\ldots\}
+\]
+są ortogonalne (każde dwie są prostopadłe). Ile wynosi norma (długość)
+każdej z~nich według tego iloczynu skalarnego?
+\end{tresc}
+
+\begin{teoria}[Potrzebne wzory]
+\begin{fakt}[Iloczyn na sumę]
+\begin{align*}
+\cos\alpha\cos\beta&=\tfrac12\bigl[\cos(\alpha-\beta)+\cos(\alpha+\beta)\bigr],\\
+\sin\alpha\sin\beta&=\tfrac12\bigl[\cos(\alpha-\beta)-\cos(\alpha+\beta)\bigr],\\
+\sin\alpha\cos\beta&=\tfrac12\bigl[\sin(\alpha+\beta)+\sin(\alpha-\beta)\bigr].
+\end{align*}
+(Dodaj/odejmij wzory na $\cos(\alpha\pm\beta)$ i~$\sin(\alpha\pm\beta)$.)
+\end{fakt}
+\begin{lemat}\label{lem:calki}
+Dla całkowitego $k$:
+\[
+\int_{-\pi}^{\pi}\cos kx\,dx=\begin{cases}2\pi,&k=0,\\0,&k\ne0,\end{cases}
+\qquad
+\int_{-\pi}^{\pi}\sin kx\,dx=0.
+\]
+\end{lemat}
+\begin{proof}
+Dla $k\ne0$: $\int_{-\pi}^{\pi}\cos kx\,dx=\bigl[\frac{\sin kx}k\bigr]_{-\pi}^{\pi}
+=\frac{\sin k\pi-\sin(-k\pi)}{k}=0$, bo $\sin k\pi=0$. Dla $k=0$ całkujemy
+$1$. Funkcja $\sin kx$ jest nieparzysta, a~przedział symetryczny.
+\end{proof}
+\end{teoria}
+
+\begin{intuicja}
+Funkcje na przedziale to „wektory z~nieskończenie wieloma
+współrzędnymi” (wartość w~każdym punkcie), a~całka iloczynu to
+odpowiednik $\sum_ix_iy_i$. Iloczyn dwóch różnych harmonicznych da się
+zamienić na sumę \emph{innych} harmonicznych o~niezerowej częstotliwości,
+a~każda z~nich na pełnym okresie ma tyle samo „nad osią”, co „pod osią”
+--- całka $0$. Tylko gdy częstotliwości są równe, pojawia się stała
+$\cos0=1$, która daje niezerową całkę --- to jest kwadrat normy.
+\end{intuicja}
+
+\formalnie
+Niech $m,n\ge0$ będą całkowite. Ze wzorów iloczyn na sumę
+i~lematu~\ref{lem:calki}:
+
+\emph{Cosinus z~cosinusem} ($\cos0x=1$ obejmuje funkcję stałą):
+\[
+\int_{-\pi}^{\pi}\!\cos mx\cos nx\,dx
+=\tfrac12\!\int_{-\pi}^{\pi}\!\bigl[\cos(m-n)x+\cos(m+n)x\bigr]dx.
+\]
+Dla $m\ne n$ oba $m-n$ i~$m+n$ są niezerowe, więc całka to $0$.
+
+\emph{Sinus z~sinusem} ($m,n\ge1$):
+\[
+\int_{-\pi}^{\pi}\!\sin mx\sin nx\,dx
+=\tfrac12\!\int_{-\pi}^{\pi}\!\bigl[\cos(m-n)x-\cos(m+n)x\bigr]dx,
+\]
+dla $m\ne n$ znów $0$.
+
+\emph{Sinus z~cosinusem} ($m\ge1$, $n\ge0$, także $m=n$):
+\[
+\int_{-\pi}^{\pi}\!\sin mx\cos nx\,dx
+=\tfrac12\!\int_{-\pi}^{\pi}\!\bigl[\sin(m+n)x+\sin(m-n)x\bigr]dx=0.
+\]
+(Albo krócej: iloczyn funkcji nieparzystej i~parzystej jest nieparzysty.)
+Zatem każde dwie różne funkcje z~układu są ortogonalne.
+
+\emph{Normy.} Dla $n\ge1$, biorąc $m=n$ we wzorach wyżej:
+\begin{align*}
+\norm{\cos nx}^2&=\frac1\pi\cdot\frac12\int_{-\pi}^{\pi}(1+\cos2nx)\,dx
+=\frac1\pi\cdot\frac{2\pi}2=1,\\
+\norm{\sin nx}^2&=\frac1\pi\cdot\frac12\int_{-\pi}^{\pi}(1-\cos2nx)\,dx=1,\\
+\norm{1}^2&=\frac1\pi\int_{-\pi}^{\pi}1\,dx=2.
+\end{align*}
+
+\begin{uwaga}
+\begin{itemize}
+\item To rzeczywiście iloczyn skalarny: dwuliniowość i~symetria są
+oczywiste, a~jeśli $f\ne0$ jest ciągła, to $f^2>0$ na pewnym przedziale,
+więc $\langle f,f\rangle>0$. (Ciągłość jest tu potrzebna.)
+\item Czynnik $\frac1\pi$ dobrano tak, żeby normy wyszły $1$. Układ
+$\{\frac1{\sqrt2},\cos x,\sin x,\cos2x,\ldots\}$ jest ortonormalny,
+a~współczynniki we wzorze $x_i=\langle x,v_i\rangle$ z~wykładu to
+\emph{współczynniki Fouriera}: $a_n=\frac1\pi\int f(x)\cos nx\,dx$,
+$b_n=\frac1\pi\int f(x)\sin nx\,dx$.
+\end{itemize}
+\end{uwaga}
+
+\begin{odpowiedz}
+Całki iloczynów różnych funkcji z~układu sprowadzają się do całek
+$\int_{-\pi}^{\pi}\cos kx$ i~$\int_{-\pi}^{\pi}\sin kx$ z~$k\ne0$, które
+są zerami. Normy: $\norm{\cos nx}=\norm{\sin nx}=1$ dla $n\ge1$ oraz
+$\norm1=\sqrt2$.
+\end{odpowiedz}
+
+\end{document}

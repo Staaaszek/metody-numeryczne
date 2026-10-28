@@ -6,7 +6,7 @@ co poprzednie zestawy. Bliźniacze repo z tym samym układem:
 `../aa` (Analiza algorytmów) — zmiany w infrastrukturze warto przenosić.
 
 ## Notatki z wykładu
-`wyklady/` jest na notatki z wykładów. Jeśli coś tam jest,
+`wyklady/` jest na notatki z wykładów (PDF-y są w `.gitignore` — nie trafiają na GH). Jeśli coś tam jest,
 **przed rozwiązywaniem zestawu przeczytaj wykład(y) z tego samego tematu**:
 teoria w zestawie ma iść za wykładem (te same definicje i oznaczenia),
 a w rozwiązaniach korzystaj przede wszystkim z metod pokazanych na wykładzie.
@@ -45,3 +45,6 @@ we wcześniejszych zestawach.
   `\eps` (= u, precyzja arytmetyki), `\oplusm`/`\otimesm` (działania maszynowe),
   `\R`, `\O`, `\floor`, `\ceil`.
 - Nie zmieniaj wyglądu `common/mn.sty` bez potrzeby — wpływa na wszystkie zestawy.
+- `\label` w displayach amsmath (`align`, `equation`) nie dostaje prefiksu
+  zestawu w `wszystko.pdf` → niezdefiniowana referencja. Wzory oznaczaj
+  `\tag{X}` i odwołuj się tekstem „(X)”; `\label` tylko w twierdzeniach itp.
